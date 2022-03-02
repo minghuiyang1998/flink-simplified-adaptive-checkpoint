@@ -173,6 +173,9 @@ public class StreamExecutionEnvironment {
     /** Settings that control the checkpointing behavior. */
     private final CheckpointConfig checkpointCfg = new CheckpointConfig();
 
+    /** Settings that control the adapter behavior. */
+    private final AdapterConfig adapterConfig = new AdapterConfig();
+
     protected final List<Transformation<?>> transformations = new ArrayList<>();
 
     private long bufferTimeout = StreamingJobGraphGenerator.UNDEFINED_NETWORK_BUFFER_TIMEOUT;
@@ -456,6 +459,47 @@ public class StreamExecutionEnvironment {
     @PublicEvolving
     public boolean isChainingEnabled() {
         return isChainingEnabled;
+    }
+
+    // ------------------------------------------------------------------------
+    //  Adapter Settings
+    // ------------------------------------------------------------------------
+
+    /**
+     * Gets the adapter config, which defines values like recovery time
+     * @return The adapter config.
+     */
+    public AdapterConfig getAdapterConfig() {
+        return adapterConfig;
+    }
+
+    /**
+     * Enables adapter for the streaming job. The period of checkpoint will be adjusted adaptively.
+     * Adapter make sure that the time for all operator recovery from lastest version complete checkpoint
+     * will not exceed the recovery time.
+     *
+     * @param recoveryTime Time interval between state checkpoints in milliseconds.
+     */
+    public StreamExecutionEnvironment enableAdapter(long recoveryTime) {
+        adapterConfig.setRecoveryTime(recoveryTime);
+        return this;
+    }
+
+
+    public StreamExecutionEnvironment enableAdapter() {
+        adapterConfig.setRecoveryTime(10000);
+        return this;
+    }
+
+    /**
+     * Returns the checkpointing interval or -1 if checkpointing is disabled.
+     *
+     * <p>Shorthand for {@code getCheckpointConfig().getCheckpointInterval()}.
+     *
+     * @return The checkpointing interval or -1
+     */
+    public long getAdapterRecoveryTime() {
+        return adapterConfig.getRecoveryTime();
     }
 
     // ------------------------------------------------------------------------
