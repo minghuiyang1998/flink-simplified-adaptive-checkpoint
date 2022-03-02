@@ -466,7 +466,8 @@ public class StreamExecutionEnvironment {
     // ------------------------------------------------------------------------
 
     /**
-     * Gets the adapter config, which defines values like recovery time
+     * Gets the adapter config, which defines values like recovery time.
+     *
      * @return The adapter config.
      */
     public AdapterConfig getAdapterConfig() {
@@ -475,8 +476,8 @@ public class StreamExecutionEnvironment {
 
     /**
      * Enables adapter for the streaming job. The period of checkpoint will be adjusted adaptively.
-     * Adapter make sure that the time for all operator recovery from lastest version complete checkpoint
-     * will not exceed the recovery time.
+     * Adapter make sure that the time for all operator recovery from lastest version complete
+     * checkpoint will not exceed the recovery time.
      *
      * @param recoveryTime Time interval between state checkpoints in milliseconds.
      */
@@ -484,7 +485,6 @@ public class StreamExecutionEnvironment {
         adapterConfig.setRecoveryTime(recoveryTime);
         return this;
     }
-
 
     public StreamExecutionEnvironment enableAdapter() {
         adapterConfig.setRecoveryTime(10000);
@@ -494,9 +494,7 @@ public class StreamExecutionEnvironment {
     /**
      * Returns the checkpointing interval or -1 if checkpointing is disabled.
      *
-     * <p>Shorthand for {@code getCheckpointConfig().getCheckpointInterval()}.
-     *
-     * @return The checkpointing interval or -1
+     * @return The recovery time or -1
      */
     public long getAdapterRecoveryTime() {
         return adapterConfig.getRecoveryTime();

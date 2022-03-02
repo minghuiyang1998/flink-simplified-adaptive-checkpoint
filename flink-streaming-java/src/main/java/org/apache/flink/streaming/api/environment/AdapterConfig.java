@@ -1,7 +1,11 @@
 package org.apache.flink.streaming.api.environment;
 
+import org.apache.flink.annotation.Public;
+
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
+/** Configuration that captures all adapter related settings. */
+@Public
 public class AdapterConfig {
     /** the same as user Tolerant time. */
     private long recoveryTime = -1;
@@ -19,7 +23,8 @@ public class AdapterConfig {
     public AdapterConfig() {}
 
     /**
-     * Sets the recovery time in which adapter used for new period calculation
+     * Sets the recovery time in which adapter used for new period calculation.
+     *
      * @param recoveryTime The recovery time, in milliseconds.
      */
     public void setRecoveryTime(long recoveryTime) {
