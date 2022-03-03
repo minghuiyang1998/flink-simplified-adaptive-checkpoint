@@ -43,6 +43,7 @@ import org.apache.flink.runtime.state.CheckpointStorage;
 import org.apache.flink.runtime.state.StateBackend;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
+import org.apache.flink.streaming.api.environment.CheckpointAdapterConfig;
 import org.apache.flink.streaming.api.operators.InternalTimeServiceManager;
 import org.apache.flink.streaming.api.operators.OutputFormatOperatorFactory;
 import org.apache.flink.streaming.api.operators.SourceOperatorFactory;
@@ -95,6 +96,7 @@ public class StreamGraph implements Pipeline {
 
     private final ExecutionConfig executionConfig;
     private final CheckpointConfig checkpointConfig;
+    private final CheckpointAdapterConfig checkpointAdapterConfig;
     private SavepointRestoreSettings savepointRestoreSettings = SavepointRestoreSettings.none();
 
     private boolean chaining;
@@ -135,6 +137,21 @@ public class StreamGraph implements Pipeline {
             SavepointRestoreSettings savepointRestoreSettings) {
         this.executionConfig = checkNotNull(executionConfig);
         this.checkpointConfig = checkNotNull(checkpointConfig);
+        this.checkpointAdapterConfig = new CheckpointAdapterConfig();
+        this.savepointRestoreSettings = checkNotNull(savepointRestoreSettings);
+
+        // create an empty new stream graph.
+        clear();
+    }
+
+    public StreamGraph(
+            ExecutionConfig executionConfig,
+            CheckpointConfig checkpointConfig,
+            CheckpointAdapterConfig checkpointAdapterConfig,
+            SavepointRestoreSettings savepointRestoreSettings) {
+        this.executionConfig = checkNotNull(executionConfig);
+        this.checkpointConfig = checkNotNull(checkpointConfig);
+        this.checkpointAdapterConfig = checkNotNull(checkpointAdapterConfig);
         this.savepointRestoreSettings = checkNotNull(savepointRestoreSettings);
 
         // create an empty new stream graph.
@@ -160,6 +177,10 @@ public class StreamGraph implements Pipeline {
 
     public CheckpointConfig getCheckpointConfig() {
         return checkpointConfig;
+    }
+
+    public CheckpointAdapterConfig getCheckpointAdapterConfig() {
+        return checkpointAdapterConfig;
     }
 
     public void setSavepointRestoreSettings(SavepointRestoreSettings savepointRestoreSettings) {

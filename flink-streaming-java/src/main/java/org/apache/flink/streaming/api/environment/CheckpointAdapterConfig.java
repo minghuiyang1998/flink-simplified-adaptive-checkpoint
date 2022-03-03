@@ -6,21 +6,21 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /** Configuration that captures all adapter related settings. */
 @Public
-public class AdapterConfig {
+public class CheckpointAdapterConfig {
     /** the same as user Tolerant time. */
     private long recoveryTime = -1;
 
     /**
-     * Creates a deep copy of the provided {@link AdapterConfig}.
+     * Creates a deep copy of the provided {@link CheckpointAdapterConfig}.
      *
-     * @param adapterConfig the config to copy.
+     * @param checkpointAdapterConfig the config to copy.
      */
-    public AdapterConfig(final AdapterConfig adapterConfig) {
-        checkNotNull(adapterConfig);
-        this.recoveryTime = adapterConfig.recoveryTime;
+    public CheckpointAdapterConfig(final CheckpointAdapterConfig checkpointAdapterConfig) {
+        checkNotNull(checkpointAdapterConfig);
+        this.recoveryTime = checkpointAdapterConfig.recoveryTime;
     }
 
-    public AdapterConfig() {}
+    public CheckpointAdapterConfig() {}
 
     /**
      * Sets the recovery time in which adapter used for new period calculation.

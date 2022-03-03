@@ -21,6 +21,7 @@ package org.apache.flink.runtime.jobgraph;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.cache.DistributedCache;
+import org.apache.flink.runtime.jobgraph.tasks.JobCheckpointAdapterConfiguration;
 import org.apache.flink.runtime.jobgraph.tasks.JobCheckpointingSettings;
 import org.apache.flink.util.SerializedValue;
 
@@ -54,6 +55,8 @@ public class JobGraphBuilder {
     @Nullable private SerializedValue<ExecutionConfig> serializedExecutionConfig = null;
 
     @Nullable private JobCheckpointingSettings jobCheckpointingSettings = null;
+
+    @Nullable private JobCheckpointAdapterConfiguration jobCheckpointAdapterConfiguration = null;
 
     @Nullable private SavepointRestoreSettings savepointRestoreSettings = null;
 
@@ -98,6 +101,12 @@ public class JobGraphBuilder {
         return this;
     }
 
+    public JobGraphBuilder setJobCheckpointAdapterConfiguration(
+            JobCheckpointAdapterConfiguration newJobCheckpointAdapterSettings) {
+        this.jobCheckpointAdapterConfiguration = newJobCheckpointAdapterSettings;
+        return this;
+    }
+
     public JobGraphBuilder setSavepointRestoreSettings(
             SavepointRestoreSettings newSavepointRestoreSettings) {
         savepointRestoreSettings = newSavepointRestoreSettings;
@@ -126,6 +135,10 @@ public class JobGraphBuilder {
 
         if (jobCheckpointingSettings != null) {
             jobGraph.setSnapshotSettings(jobCheckpointingSettings);
+        }
+
+        if (jobCheckpointAdapterConfiguration != null) {
+            jobGraph.setCheckpointAdapterConfig(jobCheckpointAdapterConfiguration);
         }
 
         if (savepointRestoreSettings != null) {

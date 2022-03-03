@@ -43,6 +43,7 @@ import org.apache.flink.runtime.state.CheckpointStorage;
 import org.apache.flink.runtime.state.KeyGroupRangeAssignment;
 import org.apache.flink.runtime.state.StateBackend;
 import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.api.environment.CheckpointAdapterConfig;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.ExecutionCheckpointingOptions;
 import org.apache.flink.streaming.api.operators.sorted.state.BatchExecutionCheckpointStorage;
@@ -148,6 +149,7 @@ public class StreamGraphGenerator {
     private final ExecutionConfig executionConfig;
 
     private final CheckpointConfig checkpointConfig;
+    private final CheckpointAdapterConfig checkpointAdapterConfig;
 
     private final ReadableConfig configuration;
 
@@ -225,17 +227,35 @@ public class StreamGraphGenerator {
             final List<Transformation<?>> transformations,
             final ExecutionConfig executionConfig,
             final CheckpointConfig checkpointConfig) {
-        this(transformations, executionConfig, checkpointConfig, new Configuration());
+        this(transformations, executionConfig, checkpointConfig, new CheckpointAdapterConfig(), new Configuration());
+    }
+
+    public StreamGraphGenerator(
+            final List<Transformation<?>> transformations,
+            final ExecutionConfig executionConfig,
+            final CheckpointConfig checkpointConfig,
+            final CheckpointAdapterConfig checkpointAdapterConfig) {
+        this(transformations, executionConfig, checkpointConfig, checkpointAdapterConfig, new Configuration());
     }
 
     public StreamGraphGenerator(
             List<Transformation<?>> transformations,
             ExecutionConfig executionConfig,
             CheckpointConfig checkpointConfig,
+            Configuration configuration) {
+        this(transformations, executionConfig, checkpointConfig, new CheckpointAdapterConfig(), configuration);
+    }
+
+    public StreamGraphGenerator(
+            List<Transformation<?>> transformations,
+            ExecutionConfig executionConfig,
+            CheckpointConfig checkpointConfig,
+            CheckpointAdapterConfig checkpointAdapterConfig,
             ReadableConfig configuration) {
         this.transformations = checkNotNull(transformations);
         this.executionConfig = checkNotNull(executionConfig);
         this.checkpointConfig = new CheckpointConfig(checkpointConfig);
+        this.checkpointAdapterConfig = new CheckpointAdapterConfig(checkpointAdapterConfig);
         this.configuration = checkNotNull(configuration);
         this.checkpointStorage = this.checkpointConfig.getCheckpointStorage();
         this.savepointRestoreSettings = SavepointRestoreSettings.fromConfiguration(configuration);
@@ -302,7 +322,7 @@ public class StreamGraphGenerator {
     }
 
     public StreamGraph generate() {
-        streamGraph = new StreamGraph(executionConfig, checkpointConfig, savepointRestoreSettings);
+        streamGraph = new StreamGraph(executionConfig, checkpointConfig, checkpointAdapterConfig, savepointRestoreSettings);
         streamGraph.setEnableCheckpointsAfterTasksFinish(
                 configuration.get(
                         ExecutionCheckpointingOptions.ENABLE_CHECKPOINTS_AFTER_TASKS_FINISH));

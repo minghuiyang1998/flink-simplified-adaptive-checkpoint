@@ -174,7 +174,7 @@ public class StreamExecutionEnvironment {
     private final CheckpointConfig checkpointCfg = new CheckpointConfig();
 
     /** Settings that control the adapter behavior. */
-    private final AdapterConfig adapterConfig = new AdapterConfig();
+    private final CheckpointAdapterConfig checkpointAdapterConfig = new CheckpointAdapterConfig();
 
     protected final List<Transformation<?>> transformations = new ArrayList<>();
 
@@ -470,8 +470,8 @@ public class StreamExecutionEnvironment {
      *
      * @return The adapter config.
      */
-    public AdapterConfig getAdapterConfig() {
-        return adapterConfig;
+    public CheckpointAdapterConfig getCheckpointAdapterConfig() {
+        return checkpointAdapterConfig;
     }
 
     /**
@@ -481,13 +481,13 @@ public class StreamExecutionEnvironment {
      *
      * @param recoveryTime Time interval between state checkpoints in milliseconds.
      */
-    public StreamExecutionEnvironment enableAdapter(long recoveryTime) {
-        adapterConfig.setRecoveryTime(recoveryTime);
+    public StreamExecutionEnvironment enableCheckpointAdapter(long recoveryTime) {
+        checkpointAdapterConfig.setRecoveryTime(recoveryTime);
         return this;
     }
 
-    public StreamExecutionEnvironment enableAdapter() {
-        adapterConfig.setRecoveryTime(10000);
+    public StreamExecutionEnvironment enableCheckpointAdapter() {
+        checkpointAdapterConfig.setRecoveryTime(10000);
         return this;
     }
 
@@ -496,8 +496,8 @@ public class StreamExecutionEnvironment {
      *
      * @return The recovery time or -1
      */
-    public long getAdapterRecoveryTime() {
-        return adapterConfig.getRecoveryTime();
+    public long getCheckpointAdapterRecoveryTime() {
+        return checkpointAdapterConfig.getRecoveryTime();
     }
 
     // ------------------------------------------------------------------------
@@ -2149,7 +2149,7 @@ public class StreamExecutionEnvironment {
                     "No operators defined in streaming topology. Cannot execute.");
         }
 
-        return new StreamGraphGenerator(transformations, config, checkpointCfg, configuration)
+        return new StreamGraphGenerator(transformations, config, checkpointCfg, checkpointAdapterConfig, configuration)
                 .setStateBackend(defaultStateBackend)
                 .setChangelogStateBackendEnabled(changelogStateBackendEnabled)
                 .setSavepointDir(defaultSavepointDirectory)

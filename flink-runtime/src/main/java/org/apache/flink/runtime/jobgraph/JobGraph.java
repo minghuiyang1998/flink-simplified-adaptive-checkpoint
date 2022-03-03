@@ -25,6 +25,7 @@ import org.apache.flink.api.common.cache.DistributedCache;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.runtime.blob.PermanentBlobKey;
+import org.apache.flink.runtime.jobgraph.tasks.JobCheckpointAdapterConfiguration;
 import org.apache.flink.runtime.jobgraph.tasks.JobCheckpointingSettings;
 import org.apache.flink.runtime.jobmanager.scheduler.CoLocationGroup;
 import org.apache.flink.runtime.jobmanager.scheduler.SlotSharingGroup;
@@ -97,6 +98,9 @@ public class JobGraph implements Serializable {
 
     /** The settings for the job checkpoints. */
     private JobCheckpointingSettings snapshotSettings;
+
+    /** The settings for the job checkpoints. */
+    private JobCheckpointAdapterConfiguration ckpAdapterConfiguration;
 
     /** Savepoint restore settings. */
     private SavepointRestoreSettings savepointRestoreSettings = SavepointRestoreSettings.none();
@@ -341,6 +345,16 @@ public class JobGraph implements Serializable {
     }
 
     /**
+     * Sets the settings for asynchronous snapshots. A value of {@code null} means that snapshotting
+     * is not enabled.
+     *
+     * @param settings The snapshot settings
+     */
+    public void setCheckpointAdapterConfig(JobCheckpointAdapterConfiguration settings) {
+        this.ckpAdapterConfiguration = settings;
+    }
+
+    /**
      * Gets the settings for asynchronous snapshots. This method returns null, when checkpointing is
      * not enabled.
      *
@@ -348,6 +362,16 @@ public class JobGraph implements Serializable {
      */
     public JobCheckpointingSettings getCheckpointingSettings() {
         return snapshotSettings;
+    }
+
+    /**
+     * Gets the settings for asynchronous snapshots. This method returns null, when checkpointing is
+     * not enabled.
+     *
+     * @return The snapshot settings
+     */
+    public JobCheckpointAdapterConfiguration getCkpAdapterConfiguration() {
+        return ckpAdapterConfiguration;
     }
 
     /**
