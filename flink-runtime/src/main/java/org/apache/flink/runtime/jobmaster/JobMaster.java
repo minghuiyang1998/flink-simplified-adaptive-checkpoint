@@ -27,6 +27,7 @@ import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.queryablestate.KvStateID;
 import org.apache.flink.runtime.accumulators.AccumulatorSnapshot;
 import org.apache.flink.runtime.blob.BlobWriter;
+import org.apache.flink.runtime.checkpoint.CheckpointCoordinator;
 import org.apache.flink.runtime.checkpoint.CheckpointMetrics;
 import org.apache.flink.runtime.checkpoint.TaskStateSnapshot;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
@@ -47,6 +48,7 @@ import org.apache.flink.runtime.jobgraph.IntermediateDataSetID;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 import org.apache.flink.runtime.jobgraph.OperatorID;
+import org.apache.flink.runtime.jobgraph.tasks.JobCheckpointAdapterConfiguration;
 import org.apache.flink.runtime.jobmanager.OnCompletionActions;
 import org.apache.flink.runtime.jobmanager.PartitionProducerDisposedException;
 import org.apache.flink.runtime.jobmaster.factories.JobManagerJobMetricGroupFactory;
@@ -325,6 +327,14 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
                         executionDeploymentTracker,
                         jobManagerJobMetricGroup,
                         jobStatusListener);
+
+
+        // get Checkpoint Coordinator ? schedulerNG could not get this
+        CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
+        // get Adapter config: from jobGraph
+        JobCheckpointAdapterConfiguration ckpAdapterConfiguration = this.jobGraph.getCkpAdapterConfiguration();
+        // setup Adapter
+
 
         this.heartbeatServices = checkNotNull(heartbeatServices);
         this.taskManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();

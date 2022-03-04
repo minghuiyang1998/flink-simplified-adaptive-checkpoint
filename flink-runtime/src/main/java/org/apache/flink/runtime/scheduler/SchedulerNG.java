@@ -23,6 +23,7 @@ import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.queryablestate.KvStateID;
 import org.apache.flink.runtime.accumulators.AccumulatorSnapshot;
+import org.apache.flink.runtime.checkpoint.CheckpointCoordinator;
 import org.apache.flink.runtime.checkpoint.CheckpointMetrics;
 import org.apache.flink.runtime.checkpoint.TaskStateSnapshot;
 import org.apache.flink.runtime.concurrent.ComponentMainThreadExecutor;
@@ -91,6 +92,10 @@ public interface SchedulerNG extends AutoCloseableAsync {
     void notifyPartitionDataAvailable(ResultPartitionID partitionID);
 
     ExecutionGraphInfo requestJob();
+
+    default CheckpointCoordinator  getCheckpointCoordinator() {
+        return null;
+    };
 
     JobStatus requestJobStatus();
 
