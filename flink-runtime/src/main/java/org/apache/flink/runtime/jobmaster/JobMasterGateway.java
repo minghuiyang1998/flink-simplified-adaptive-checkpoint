@@ -47,6 +47,7 @@ import org.apache.flink.runtime.slots.ResourceRequirement;
 import org.apache.flink.runtime.taskexecutor.TaskExecutorToJobManagerHeartbeatPayload;
 import org.apache.flink.runtime.taskexecutor.slot.SlotOffer;
 import org.apache.flink.runtime.taskmanager.TaskExecutionState;
+import org.apache.flink.runtime.taskmanager.TaskManagerRunningState;
 import org.apache.flink.runtime.taskmanager.UnresolvedTaskManagerLocation;
 import org.apache.flink.util.SerializedValue;
 
@@ -79,6 +80,15 @@ public interface JobMasterGateway
      */
     CompletableFuture<Acknowledge> updateTaskExecutionState(
             final TaskExecutionState taskExecutionState);
+
+    /**
+     * Updates the task execution state for a given task.
+     *
+     * @param taskManagerRunningState New task execution state for a given task
+     * @return Future flag of the task execution state update result
+     */
+    CompletableFuture<Acknowledge> submitTaskManagerRunningState(
+            final TaskManagerRunningState taskManagerRunningState);
 
     /**
      * Requests the next input split for the {@link ExecutionJobVertex}. The next input split is

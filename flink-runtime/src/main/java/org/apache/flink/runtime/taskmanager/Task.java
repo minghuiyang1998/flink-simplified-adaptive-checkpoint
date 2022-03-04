@@ -65,6 +65,7 @@ import org.apache.flink.runtime.jobgraph.tasks.InputSplitProvider;
 import org.apache.flink.runtime.jobgraph.tasks.TaskInvokable;
 import org.apache.flink.runtime.jobgraph.tasks.TaskOperatorEventGateway;
 import org.apache.flink.runtime.memory.MemoryManager;
+import org.apache.flink.runtime.metrics.groups.TaskIOMetricGroup;
 import org.apache.flink.runtime.metrics.groups.TaskMetricGroup;
 import org.apache.flink.runtime.operators.coordination.OperatorEvent;
 import org.apache.flink.runtime.operators.coordination.TaskNotRunningException;
@@ -1398,6 +1399,9 @@ public class Task
 
     public void notifyCheckpointComplete(final long checkpointID) {
         final TaskInvokable invokable = this.invokable;
+
+        TaskIOMetricGroup taskIOMetricGroup = metrics.getIOMetricGroup(); // include numRecordIn + busy
+        taskManagerActions.submitTaskExecutorRunningStatus(new TaskManagerRunningState(executionId, taskIOMetricGroup));
 
         if (executionState == ExecutionState.RUNNING) {
             checkState(invokable instanceof CheckpointableTask, "invokable is not checkpointable");

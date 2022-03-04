@@ -114,11 +114,19 @@ public class TaskIOMetricGroup extends ProxyMetricGroup<TaskMetricGroup> {
         return backPressuredTimePerSecond;
     }
 
+    public Meter getNumRecordsInRate() {
+        return numRecordsInRate;
+    }
+
+    public TimerGauge getIdleTimePerSecond() {
+        return idleTimePerSecond;
+    }
+
     public void setEnableBusyTime(boolean enabled) {
         busyTimeEnabled = enabled;
     }
 
-    private double getBusyTimePerSecond() {
+    public double getBusyTimePerSecond() {
         double busyTime = idleTimePerSecond.getValue() + backPressuredTimePerSecond.getValue();
         return busyTimeEnabled ? 1000.0 - Math.min(busyTime, 1000.0) : Double.NaN;
     }

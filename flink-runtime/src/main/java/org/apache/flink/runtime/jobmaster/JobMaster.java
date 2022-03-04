@@ -87,6 +87,7 @@ import org.apache.flink.runtime.taskexecutor.slot.SlotOffer;
 import org.apache.flink.runtime.taskmanager.TaskExecutionState;
 import org.apache.flink.runtime.taskmanager.TaskManagerLocation;
 import org.apache.flink.runtime.taskmanager.TaskManagerLocation.ResolutionMode;
+import org.apache.flink.runtime.taskmanager.TaskManagerRunningState;
 import org.apache.flink.runtime.taskmanager.UnresolvedTaskManagerLocation;
 import org.apache.flink.util.ExceptionUtils;
 import org.apache.flink.util.FlinkException;
@@ -469,6 +470,17 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
             handleJobMasterError(taskExecutionException);
         }
         return FutureUtils.completedExceptionally(taskExecutionException);
+    }
+
+    @Override
+    public CompletableFuture<Acknowledge> submitTaskManagerRunningState(final TaskManagerRunningState taskManagerRunningState) {
+        try {
+            return CompletableFuture.completedFuture(
+                    checkpointAdapter.dealWithMessageFromOneTaskExecutor(taskManagerRunningState));
+        } catch (IOException e) {
+            log.warn("Error while deal with checkpoint adapter", e);
+            return FutureUtils.completedExceptionally(e);
+        }
     }
 
     @Override

@@ -125,6 +125,7 @@ import org.apache.flink.runtime.taskmanager.CheckpointResponder;
 import org.apache.flink.runtime.taskmanager.Task;
 import org.apache.flink.runtime.taskmanager.TaskExecutionState;
 import org.apache.flink.runtime.taskmanager.TaskManagerActions;
+import org.apache.flink.runtime.taskmanager.TaskManagerRunningState;
 import org.apache.flink.runtime.taskmanager.UnresolvedTaskManagerLocation;
 import org.apache.flink.runtime.util.JvmUtils;
 import org.apache.flink.runtime.webmonitor.threadinfo.ThreadInfoSamplesRequest;
@@ -1839,6 +1840,22 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
         }
     }
 
+    private void submitTaskManagerRunningState(
+            final JobMasterGateway jobMasterGateway, final TaskManagerRunningState taskManagerRunningState) {
+        final ExecutionAttemptID executionAttemptID = taskManagerRunningState.getID();
+
+        CompletableFuture<Acknowledge> futureAcknowledge =
+                jobMasterGateway.submitTaskManagerRunningState(taskManagerRunningState);
+
+        futureAcknowledge.whenCompleteAsync(
+                (ack, throwable) -> {
+                    if (throwable != null) {
+                        failTask(executionAttemptID, throwable);
+                    }
+                },
+                getMainThreadExecutor());
+    }
+
     private void updateTaskExecutionState(
             final JobMasterGateway jobMasterGateway, final TaskExecutionState taskExecutionState) {
         final ExecutionAttemptID executionAttemptID = taskExecutionState.getID();
@@ -2330,6 +2347,11 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
             } else {
                 TaskExecutor.this.updateTaskExecutionState(jobMasterGateway, taskExecutionState);
             }
+        }
+
+        @Override
+        public void submitTaskExecutorRunningStatus(final TaskManagerRunningState taskManagerRunningState) {
+            TaskExecutor.this.submitTaskManagerRunningState(jobMasterGateway, taskManagerRunningState);
         }
     }
 
