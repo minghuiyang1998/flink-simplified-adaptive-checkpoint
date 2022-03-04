@@ -142,6 +142,8 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
 
     private final JobGraph jobGraph;
 
+    private final CheckpointAdapter checkpointAdapter;
+
     private final Time rpcTimeout;
 
     private final HighAvailabilityServices highAvailabilityServices;
@@ -329,12 +331,12 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
                         jobStatusListener);
 
 
-        // get Checkpoint Coordinator ? schedulerNG could not get this
+        // get Checkpoint from schedulerNG
         CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
         // get Adapter config: from jobGraph
         JobCheckpointAdapterConfiguration ckpAdapterConfiguration = this.jobGraph.getCkpAdapterConfiguration();
         // setup Adapter
-
+        this.checkpointAdapter = new CheckpointAdapter(ckpAdapterConfiguration, checkpointCoordinator);
 
         this.heartbeatServices = checkNotNull(heartbeatServices);
         this.taskManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
