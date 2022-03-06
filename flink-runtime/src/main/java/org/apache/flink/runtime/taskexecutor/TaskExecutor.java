@@ -1842,7 +1842,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
     private void submitTaskManagerRunningState(
             final JobMasterGateway jobMasterGateway, final TaskManagerRunningState taskManagerRunningState) {
-        final ExecutionAttemptID executionAttemptID = taskManagerRunningState.getID();
+        final ExecutionAttemptID executionAttemptID = taskManagerRunningState.getExecutionId();
 
         CompletableFuture<Acknowledge> futureAcknowledge =
                 jobMasterGateway.submitTaskManagerRunningState(taskManagerRunningState);

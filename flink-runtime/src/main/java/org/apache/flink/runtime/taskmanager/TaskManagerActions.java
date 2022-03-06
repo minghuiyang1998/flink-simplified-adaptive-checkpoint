@@ -52,5 +52,7 @@ public interface TaskManagerActions {
      *
      * @param taskManagerRunningState Task execution state update
      */
-    void submitTaskExecutorRunningStatus(final TaskManagerRunningState taskManagerRunningState);
+    default void submitTaskExecutorRunningStatus(final TaskManagerRunningState taskManagerRunningState) {
+        return;
+    };
 }

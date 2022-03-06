@@ -336,6 +336,7 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
         CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
         // get Adapter config: from jobGraph
         JobCheckpointAdapterConfiguration ckpAdapterConfiguration = this.jobGraph.getCkpAdapterConfiguration();
+        System.out.println(ckpAdapterConfiguration);
         // setup Adapter
         this.checkpointAdapter = new CheckpointAdapter(ckpAdapterConfiguration, checkpointCoordinator);
 
@@ -474,13 +475,11 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
 
     @Override
     public CompletableFuture<Acknowledge> submitTaskManagerRunningState(final TaskManagerRunningState taskManagerRunningState) {
-        try {
-            return CompletableFuture.completedFuture(
-                    checkpointAdapter.dealWithMessageFromOneTaskExecutor(taskManagerRunningState));
-        } catch (IOException e) {
-            log.warn("Error while deal with checkpoint adapter", e);
-            return FutureUtils.completedExceptionally(e);
+        if (checkpointAdapter.dealWithMessageFromOneTaskExecutor(taskManagerRunningState)) {
+            return CompletableFuture.completedFuture(Acknowledge.get());
         }
+        JobMasterException e = new JobMasterException( "Could not submit the running state of task execution to JobMaster.");
+        return FutureUtils.completedExceptionally(e);
     }
 
     @Override

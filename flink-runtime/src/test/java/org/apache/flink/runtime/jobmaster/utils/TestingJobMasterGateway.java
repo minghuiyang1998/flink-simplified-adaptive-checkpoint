@@ -53,6 +53,7 @@ import org.apache.flink.runtime.state.KeyGroupRange;
 import org.apache.flink.runtime.taskexecutor.TaskExecutorToJobManagerHeartbeatPayload;
 import org.apache.flink.runtime.taskexecutor.slot.SlotOffer;
 import org.apache.flink.runtime.taskmanager.TaskExecutionState;
+import org.apache.flink.runtime.taskmanager.TaskManagerRunningState;
 import org.apache.flink.runtime.taskmanager.UnresolvedTaskManagerLocation;
 import org.apache.flink.util.SerializedValue;
 import org.apache.flink.util.function.TriConsumer;
@@ -324,6 +325,11 @@ public class TestingJobMasterGateway implements JobMasterGateway {
     public CompletableFuture<Acknowledge> updateTaskExecutionState(
             TaskExecutionState taskExecutionState) {
         return updateTaskExecutionStateFunction.apply(taskExecutionState);
+    }
+
+    @Override
+    public CompletableFuture<Acknowledge> submitTaskManagerRunningState(TaskManagerRunningState taskManagerRunningState) {
+        return null;
     }
 
     @Override
