@@ -65,7 +65,9 @@ public class TaskManagerRunningState implements Serializable {
         Meter numRecordsInRate = taskIOMetricGroup.getNumRecordsInRate();
         this.numRecordsInRate = numRecordsInRate.getRate();
         double busyTimeMsPerSecond = taskIOMetricGroup.getBusyTimePerSecond();
-        this.idealProcessingRate = numRecordsInRate.getRate() * 1000 / busyTimeMsPerSecond;
+        this.idealProcessingRate = this.numRecordsInRate * 1000 / busyTimeMsPerSecond;
+        System.out.println("numRecordsInRate: " + this.numRecordsInRate);
+        System.out.println("idealProcessingRate: " + this.idealProcessingRate);
     }
 
     public ExecutionAttemptID getExecutionId() {

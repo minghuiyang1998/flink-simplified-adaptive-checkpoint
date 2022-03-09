@@ -150,7 +150,7 @@ public class CheckpointCoordinator {
      * The base checkpoint interval. Actual trigger time may be affected by the max concurrent
      * checkpoints and minimum-pause values
      */
-    private final long baseInterval;
+    private long baseInterval;
 
     /** The max time (in ms) that a checkpoint may take. */
     private final long checkpointTimeout;
@@ -1727,6 +1727,24 @@ public class CheckpointCoordinator {
 
     public void startCheckpointScheduler() {
         synchronized (lock) {
+            if (shutdown) {
+                throw new IllegalArgumentException("Checkpoint coordinator is shut down");
+            }
+            Preconditions.checkState(
+                    isPeriodicCheckpointingConfigured(),
+                    "Can not start checkpoint scheduler, if no periodic checkpointing is configured");
+
+            // make sure all prior timers are cancelled
+            stopCheckpointScheduler();
+
+            periodicScheduling = true;
+            currentPeriodicTrigger = scheduleTriggerWithDelay(getRandomInitDelay());
+        }
+    }
+
+    public void restartCheckpointScheduler(long newPeriod) {
+        synchronized (lock) {
+            this.baseInterval = newPeriod;
             if (shutdown) {
                 throw new IllegalArgumentException("Checkpoint coordinator is shut down");
             }

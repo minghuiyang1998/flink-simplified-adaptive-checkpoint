@@ -10,3 +10,9 @@ to style problem, find with -x and fix it!
 3. before using  "testCheckpointPrecedesSavepointRecovery" test in "jobMasterTest.java" to test Adapter and
 JobMaster Gateway (run "mvn clean package" first, Otherwise, an error message is displayed 
 indicating that the "rpcService" cannot be established.)
+
+
+1. data can be delivered to jobMaster (checked)
+2. rpc (checked)
+3.  Adapter can receive the data (checked) 
+4. can deliver data ?

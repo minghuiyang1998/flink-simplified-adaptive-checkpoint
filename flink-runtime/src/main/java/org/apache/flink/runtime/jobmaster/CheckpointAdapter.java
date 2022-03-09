@@ -22,14 +22,14 @@ public class CheckpointAdapter {
     public boolean dealWithMessageFromOneTaskExecutor(TaskManagerRunningState taskManagerRunningState) {
         double ideal = taskManagerRunningState.getIdealProcessingRate();
         double inputRate = taskManagerRunningState.getNumRecordsInRate();
+        System.out.println("ideal: " + ideal + " inputRate: " + inputRate);
         // TODO: do something here
-
         return true;
     }
 
     public void updatePeriod() {
-        // TODO: rewrite a  function in CheckpointCoordinator to restart
-//        coordinator.restartCheckpointScheduler(min);
+        long newPeriod = 1l; // TODO: calc here
+        coordinator.restartCheckpointScheduler(newPeriod);
     }
 
     public JobCheckpointAdapterConfiguration getCheckpointAdapterConfiguration() {
