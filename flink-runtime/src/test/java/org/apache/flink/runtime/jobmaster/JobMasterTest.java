@@ -83,6 +83,9 @@ import org.apache.flink.runtime.jobmaster.slotpool.TestingSlotPoolServiceBuilder
 import org.apache.flink.runtime.jobmaster.utils.JobMasterBuilder;
 import org.apache.flink.runtime.leaderretrieval.SettableLeaderRetrievalService;
 import org.apache.flink.runtime.messages.Acknowledge;
+import org.apache.flink.runtime.metrics.groups.TaskIOMetricGroup;
+import org.apache.flink.runtime.metrics.groups.TaskMetricGroup;
+import org.apache.flink.runtime.metrics.groups.UnregisteredMetricGroups;
 import org.apache.flink.runtime.registration.RegistrationResponse;
 import org.apache.flink.runtime.resourcemanager.ResourceManagerGateway;
 import org.apache.flink.runtime.resourcemanager.ResourceManagerId;
@@ -104,6 +107,7 @@ import org.apache.flink.runtime.taskexecutor.slot.SlotOffer;
 import org.apache.flink.runtime.taskmanager.LocalUnresolvedTaskManagerLocation;
 import org.apache.flink.runtime.taskmanager.TaskExecutionState;
 import org.apache.flink.runtime.taskmanager.TaskManagerLocation;
+import org.apache.flink.runtime.taskmanager.TaskManagerRunningState;
 import org.apache.flink.runtime.taskmanager.UnresolvedTaskManagerLocation;
 import org.apache.flink.runtime.testtasks.NoOpInvokable;
 import org.apache.flink.runtime.testutils.CommonTestUtils;
@@ -1391,6 +1395,14 @@ public class JobMasterTest extends TestLogger {
             jobMasterGateway
                     .updateTaskExecutionState(
                             new TaskExecutionState(executionAttemptId, ExecutionState.FINISHED))
+                    .get();
+
+            // finish the producer task
+            TaskMetricGroup task = UnregisteredMetricGroups.createUnregisteredTaskMetricGroup();
+            TaskIOMetricGroup taskIO = task.getIOMetricGroup();
+            jobMasterGateway
+                    .submitTaskManagerRunningState(
+                            new TaskManagerRunningState(executionAttemptId, taskIO))
                     .get();
 
             // request the state of the result partition of the producer
