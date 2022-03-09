@@ -24,8 +24,10 @@ public class CheckpointAdapter {
             CheckpointCoordinator coordinator) {
         this.checkpointAdapterConfiguration = checkpointAdapterConfiguration;
         this.coordinator = coordinator;
-        this.recoveryTime = checkpointAdapterConfiguration == null ? 5000l :
-                checkpointAdapterConfiguration.getRecoveryTime();
+        this.recoveryTime =
+                checkpointAdapterConfiguration == null
+                        ? 5000l
+                        : checkpointAdapterConfiguration.getRecoveryTime();
         this.ckpToPeriods = new ConcurrentHashMap<>();
     }
 
@@ -41,14 +43,19 @@ public class CheckpointAdapter {
         long checkpointID = taskManagerRunningState.getCheckpointID();
 
         final String message =
-                String.format("ideal: " + ideal + " inputRate: " + inputRate
-                        + " checkpointID: " + checkpointID);
+                String.format(
+                        "ideal: "
+                                + ideal
+                                + " inputRate: "
+                                + inputRate
+                                + " checkpointID: "
+                                + checkpointID);
         log.info(message);
-        System.out.println("ideal: " + ideal + " inputRate: " +
-                inputRate + " checkpointID: " + checkpointID);
+        System.out.println(
+                "ideal: " + ideal + " inputRate: " + inputRate + " checkpointID: " + checkpointID);
 
         double maxData = recoveryTime * ideal;
-        long newPeriod = (long)(maxData / inputRate);
+        long newPeriod = (long) (maxData / inputRate);
         try {
             ckpToPeriods.putIfAbsent(checkpointID, new LinkedBlockingQueue<>());
             ckpToPeriods.get(checkpointID).put(newPeriod);
@@ -72,8 +79,11 @@ public class CheckpointAdapter {
         }
         coordinator.restartCheckpointScheduler(min);
         final String message =
-                String.format("checkpoint Period has been changed to: " + min +
-                        " according to data of checkpoint: " + checkpointID);
+                String.format(
+                        "checkpoint Period has been changed to: "
+                                + min
+                                + " according to data of checkpoint: "
+                                + checkpointID);
         log.info(message);
     }
 
