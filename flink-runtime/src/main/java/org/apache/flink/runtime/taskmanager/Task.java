@@ -1403,7 +1403,7 @@ public class Task
         TaskIOMetricGroup taskIOMetricGroup =
                 metrics.getIOMetricGroup(); // include numRecordIn + busy
         taskManagerActions.submitTaskExecutorRunningStatus(
-                new TaskManagerRunningState(executionId, taskIOMetricGroup));
+                new TaskManagerRunningState(executionId, checkpointID, taskIOMetricGroup));
 
         if (executionState == ExecutionState.RUNNING) {
             checkState(invokable instanceof CheckpointableTask, "invokable is not checkpointable");

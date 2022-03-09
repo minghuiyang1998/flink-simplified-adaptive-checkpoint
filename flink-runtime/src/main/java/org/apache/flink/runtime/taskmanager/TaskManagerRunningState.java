@@ -45,6 +45,8 @@ public class TaskManagerRunningState implements Serializable {
 
     private final double idealProcessingRate;
 
+    private final long checkpointID;
+
     /**
      * Creates a new task execution state update, with an attached exception. This constructor may
      * never throw an exception.
@@ -53,7 +55,9 @@ public class TaskManagerRunningState implements Serializable {
      * @param taskIOMetricGroup The flink and user-defined accumulators which may be null.
      */
     public TaskManagerRunningState(
-            ExecutionAttemptID executionId, TaskIOMetricGroup taskIOMetricGroup) {
+            ExecutionAttemptID executionId,
+            long checkpointID,
+            TaskIOMetricGroup taskIOMetricGroup) {
 
         if (executionId == null || taskIOMetricGroup == null) {
             throw new NullPointerException();
@@ -65,8 +69,7 @@ public class TaskManagerRunningState implements Serializable {
         this.numRecordsInRate = numRecordsInRate.getRate();
         double busyTimeMsPerSecond = taskIOMetricGroup.getBusyTimePerSecond();
         this.idealProcessingRate = this.numRecordsInRate * 1000 / busyTimeMsPerSecond;
-        System.out.println("numRecordsInRate: " + this.numRecordsInRate);
-        System.out.println("idealProcessingRate: " + this.idealProcessingRate);
+        this.checkpointID = checkpointID;
     }
 
     public ExecutionAttemptID getExecutionId() {
@@ -83,5 +86,9 @@ public class TaskManagerRunningState implements Serializable {
 
     public double getIdealProcessingRate() {
         return idealProcessingRate;
+    }
+
+    public long getCheckpointID() {
+        return checkpointID;
     }
 }

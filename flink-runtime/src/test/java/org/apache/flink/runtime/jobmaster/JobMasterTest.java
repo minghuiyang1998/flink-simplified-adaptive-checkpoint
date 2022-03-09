@@ -1402,7 +1402,7 @@ public class JobMasterTest extends TestLogger {
             TaskIOMetricGroup taskIO = task.getIOMetricGroup();
             jobMasterGateway
                     .submitTaskManagerRunningState(
-                            new TaskManagerRunningState(executionAttemptId, taskIO))
+                            new TaskManagerRunningState(executionAttemptId, 1l, taskIO))
                     .get();
 
             // request the state of the result partition of the producer

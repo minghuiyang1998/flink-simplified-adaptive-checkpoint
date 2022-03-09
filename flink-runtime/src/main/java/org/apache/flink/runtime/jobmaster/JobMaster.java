@@ -336,10 +336,13 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
         // get Adapter config: from jobGraph
         JobCheckpointAdapterConfiguration ckpAdapterConfiguration =
                 this.jobGraph.getCkpAdapterConfiguration();
-        System.out.println(ckpAdapterConfiguration);
         // setup Adapter
         this.checkpointAdapter =
                 new CheckpointAdapter(ckpAdapterConfiguration, checkpointCoordinator);
+        // TODO: deal with null
+        if (checkpointCoordinator != null) {
+            checkpointCoordinator.setCheckpointAdapter(this.checkpointAdapter);
+        }
 
         this.heartbeatServices = checkNotNull(heartbeatServices);
         this.taskManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
@@ -479,6 +482,7 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
             final TaskManagerRunningState taskManagerRunningState) {
         System.out.println("jobMaster received data!");
         if (checkpointAdapter.dealWithMessageFromOneTaskExecutor(taskManagerRunningState)) {
+            System.out.println("Dealt successfully");
             return CompletableFuture.completedFuture(Acknowledge.get());
         }
         JobMasterException e =
