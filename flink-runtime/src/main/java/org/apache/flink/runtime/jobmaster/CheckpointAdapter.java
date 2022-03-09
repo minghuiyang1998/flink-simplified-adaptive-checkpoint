@@ -58,10 +58,10 @@ public class CheckpointAdapter {
         return true;
     }
 
-    public void updatePeriod(long checkpointId) {
+    public void updatePeriod(long checkpointID) {
         // update when a checkpoint is completed
         long min = Long.MAX_VALUE;
-        BlockingQueue<Long> queue = ckpToPeriods.get(checkpointId);
+        BlockingQueue<Long> queue = ckpToPeriods.get(checkpointID);
         while (queue.size() > 0) {
             try {
                 Long period = queue.take();
@@ -71,6 +71,10 @@ public class CheckpointAdapter {
             }
         }
         coordinator.restartCheckpointScheduler(min);
+        final String message =
+                String.format("checkpoint Period has been changed to: " + min +
+                        " according to data of checkpoint: " + checkpointID);
+        log.info(message);
     }
 
     public JobCheckpointAdapterConfiguration getCheckpointAdapterConfiguration() {
