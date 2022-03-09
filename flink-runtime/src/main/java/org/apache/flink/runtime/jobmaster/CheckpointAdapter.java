@@ -15,11 +15,13 @@ public class CheckpointAdapter {
         this.coordinator = coordinator;
     }
 
-    public void setCheckpointAdapterConfiguration(JobCheckpointAdapterConfiguration checkpointAdapterConfiguration) {
+    public void setCheckpointAdapterConfiguration(
+            JobCheckpointAdapterConfiguration checkpointAdapterConfiguration) {
         this.checkpointAdapterConfiguration = checkpointAdapterConfiguration;
     }
 
-    public boolean dealWithMessageFromOneTaskExecutor(TaskManagerRunningState taskManagerRunningState) {
+    public boolean dealWithMessageFromOneTaskExecutor(
+            TaskManagerRunningState taskManagerRunningState) {
         double ideal = taskManagerRunningState.getIdealProcessingRate();
         double inputRate = taskManagerRunningState.getNumRecordsInRate();
         System.out.println("ideal: " + ideal + " inputRate: " + inputRate);

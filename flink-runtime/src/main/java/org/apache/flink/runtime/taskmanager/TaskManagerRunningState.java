@@ -53,8 +53,7 @@ public class TaskManagerRunningState implements Serializable {
      * @param taskIOMetricGroup The flink and user-defined accumulators which may be null.
      */
     public TaskManagerRunningState(
-            ExecutionAttemptID executionId,
-            TaskIOMetricGroup taskIOMetricGroup) {
+            ExecutionAttemptID executionId, TaskIOMetricGroup taskIOMetricGroup) {
 
         if (executionId == null || taskIOMetricGroup == null) {
             throw new NullPointerException();

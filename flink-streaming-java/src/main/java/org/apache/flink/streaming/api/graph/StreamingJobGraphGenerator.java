@@ -195,7 +195,8 @@ public class StreamingJobGraphGenerator {
         configureCheckpointing();
 
         long recoveryTime = streamGraph.getCheckpointAdapterConfig().getRecoveryTime();
-        JobCheckpointAdapterConfiguration checkpointAdapterConfiguration = new JobCheckpointAdapterConfiguration(recoveryTime);
+        JobCheckpointAdapterConfiguration checkpointAdapterConfiguration =
+                new JobCheckpointAdapterConfiguration(recoveryTime);
         jobGraph.setCheckpointAdapterConfig(checkpointAdapterConfiguration);
 
         jobGraph.setSavepointRestoreSettings(streamGraph.getSavepointRestoreSettings());

@@ -328,7 +328,8 @@ public class TestingJobMasterGateway implements JobMasterGateway {
     }
 
     @Override
-    public CompletableFuture<Acknowledge> submitTaskManagerRunningState(TaskManagerRunningState taskManagerRunningState) {
+    public CompletableFuture<Acknowledge> submitTaskManagerRunningState(
+            TaskManagerRunningState taskManagerRunningState) {
         return null;
     }
 

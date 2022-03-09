@@ -331,14 +331,15 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
                         jobManagerJobMetricGroup,
                         jobStatusListener);
 
-
         // get Checkpoint from schedulerNG
         CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
         // get Adapter config: from jobGraph
-        JobCheckpointAdapterConfiguration ckpAdapterConfiguration = this.jobGraph.getCkpAdapterConfiguration();
+        JobCheckpointAdapterConfiguration ckpAdapterConfiguration =
+                this.jobGraph.getCkpAdapterConfiguration();
         System.out.println(ckpAdapterConfiguration);
         // setup Adapter
-        this.checkpointAdapter = new CheckpointAdapter(ckpAdapterConfiguration, checkpointCoordinator);
+        this.checkpointAdapter =
+                new CheckpointAdapter(ckpAdapterConfiguration, checkpointCoordinator);
 
         this.heartbeatServices = checkNotNull(heartbeatServices);
         this.taskManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
@@ -474,12 +475,15 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
     }
 
     @Override
-    public CompletableFuture<Acknowledge> submitTaskManagerRunningState(final TaskManagerRunningState taskManagerRunningState) {
+    public CompletableFuture<Acknowledge> submitTaskManagerRunningState(
+            final TaskManagerRunningState taskManagerRunningState) {
         System.out.println("jobMaster received data!");
         if (checkpointAdapter.dealWithMessageFromOneTaskExecutor(taskManagerRunningState)) {
             return CompletableFuture.completedFuture(Acknowledge.get());
         }
-        JobMasterException e = new JobMasterException( "Could not submit the running state of task execution to JobMaster.");
+        JobMasterException e =
+                new JobMasterException(
+                        "Could not submit the running state of task execution to JobMaster.");
         return FutureUtils.completedExceptionally(e);
     }
 

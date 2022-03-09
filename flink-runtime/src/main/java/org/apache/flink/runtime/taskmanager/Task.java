@@ -1400,8 +1400,10 @@ public class Task
     public void notifyCheckpointComplete(final long checkpointID) {
         final TaskInvokable invokable = this.invokable;
 
-        TaskIOMetricGroup taskIOMetricGroup = metrics.getIOMetricGroup(); // include numRecordIn + busy
-        taskManagerActions.submitTaskExecutorRunningStatus(new TaskManagerRunningState(executionId, taskIOMetricGroup));
+        TaskIOMetricGroup taskIOMetricGroup =
+                metrics.getIOMetricGroup(); // include numRecordIn + busy
+        taskManagerActions.submitTaskExecutorRunningStatus(
+                new TaskManagerRunningState(executionId, taskIOMetricGroup));
 
         if (executionState == ExecutionState.RUNNING) {
             checkState(invokable instanceof CheckpointableTask, "invokable is not checkpointable");

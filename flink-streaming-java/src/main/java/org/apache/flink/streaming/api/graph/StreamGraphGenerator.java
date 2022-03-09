@@ -227,7 +227,12 @@ public class StreamGraphGenerator {
             final List<Transformation<?>> transformations,
             final ExecutionConfig executionConfig,
             final CheckpointConfig checkpointConfig) {
-        this(transformations, executionConfig, checkpointConfig, new CheckpointAdapterConfig(), new Configuration());
+        this(
+                transformations,
+                executionConfig,
+                checkpointConfig,
+                new CheckpointAdapterConfig(),
+                new Configuration());
     }
 
     public StreamGraphGenerator(
@@ -235,7 +240,12 @@ public class StreamGraphGenerator {
             final ExecutionConfig executionConfig,
             final CheckpointConfig checkpointConfig,
             final CheckpointAdapterConfig checkpointAdapterConfig) {
-        this(transformations, executionConfig, checkpointConfig, checkpointAdapterConfig, new Configuration());
+        this(
+                transformations,
+                executionConfig,
+                checkpointConfig,
+                checkpointAdapterConfig,
+                new Configuration());
     }
 
     public StreamGraphGenerator(
@@ -243,7 +253,12 @@ public class StreamGraphGenerator {
             ExecutionConfig executionConfig,
             CheckpointConfig checkpointConfig,
             Configuration configuration) {
-        this(transformations, executionConfig, checkpointConfig, new CheckpointAdapterConfig(), configuration);
+        this(
+                transformations,
+                executionConfig,
+                checkpointConfig,
+                new CheckpointAdapterConfig(),
+                configuration);
     }
 
     public StreamGraphGenerator(
@@ -322,7 +337,12 @@ public class StreamGraphGenerator {
     }
 
     public StreamGraph generate() {
-        streamGraph = new StreamGraph(executionConfig, checkpointConfig, checkpointAdapterConfig, savepointRestoreSettings);
+        streamGraph =
+                new StreamGraph(
+                        executionConfig,
+                        checkpointConfig,
+                        checkpointAdapterConfig,
+                        savepointRestoreSettings);
         streamGraph.setEnableCheckpointsAfterTasksFinish(
                 configuration.get(
                         ExecutionCheckpointingOptions.ENABLE_CHECKPOINTS_AFTER_TASKS_FINISH));

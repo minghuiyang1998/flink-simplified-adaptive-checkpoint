@@ -1841,7 +1841,8 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
     }
 
     private void submitTaskManagerRunningState(
-            final JobMasterGateway jobMasterGateway, final TaskManagerRunningState taskManagerRunningState) {
+            final JobMasterGateway jobMasterGateway,
+            final TaskManagerRunningState taskManagerRunningState) {
         final ExecutionAttemptID executionAttemptID = taskManagerRunningState.getExecutionId();
 
         CompletableFuture<Acknowledge> futureAcknowledge =
@@ -2350,8 +2351,10 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
         }
 
         @Override
-        public void submitTaskExecutorRunningStatus(final TaskManagerRunningState taskManagerRunningState) {
-            TaskExecutor.this.submitTaskManagerRunningState(jobMasterGateway, taskManagerRunningState);
+        public void submitTaskExecutorRunningStatus(
+                final TaskManagerRunningState taskManagerRunningState) {
+            TaskExecutor.this.submitTaskManagerRunningState(
+                    jobMasterGateway, taskManagerRunningState);
         }
     }
 

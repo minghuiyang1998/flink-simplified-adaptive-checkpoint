@@ -93,9 +93,9 @@ public interface SchedulerNG extends AutoCloseableAsync {
 
     ExecutionGraphInfo requestJob();
 
-    default CheckpointCoordinator  getCheckpointCoordinator() {
+    default CheckpointCoordinator getCheckpointCoordinator() {
         return null;
-    };
+    }
 
     JobStatus requestJobStatus();
 

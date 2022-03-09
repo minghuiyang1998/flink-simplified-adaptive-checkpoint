@@ -2149,7 +2149,12 @@ public class StreamExecutionEnvironment {
                     "No operators defined in streaming topology. Cannot execute.");
         }
 
-        return new StreamGraphGenerator(transformations, config, checkpointCfg, checkpointAdapterConfig, configuration)
+        return new StreamGraphGenerator(
+                        transformations,
+                        config,
+                        checkpointCfg,
+                        checkpointAdapterConfig,
+                        configuration)
                 .setStateBackend(defaultStateBackend)
                 .setChangelogStateBackendEnabled(changelogStateBackendEnabled)
                 .setSavepointDir(defaultSavepointDirectory)

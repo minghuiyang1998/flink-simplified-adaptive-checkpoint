@@ -40,7 +40,7 @@ public class JobCheckpointAdapterConfiguration implements Serializable {
         this.recoveryTime = recoveryTime;
     }
 
-    public  JobCheckpointAdapterConfiguration() {
+    public JobCheckpointAdapterConfiguration() {
         this.recoveryTime = DEFAULT_RECOVERY;
     }
 }

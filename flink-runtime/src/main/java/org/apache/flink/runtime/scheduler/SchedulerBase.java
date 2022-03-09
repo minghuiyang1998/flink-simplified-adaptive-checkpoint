@@ -557,7 +557,7 @@ public abstract class SchedulerBase implements SchedulerNG, CheckpointScheduling
         executionGraph.transitionState(current, newState);
     }
 
-//    @VisibleForTesting
+    //    @VisibleForTesting
     @Override
     public CheckpointCoordinator getCheckpointCoordinator() {
         return executionGraph.getCheckpointCoordinator();
