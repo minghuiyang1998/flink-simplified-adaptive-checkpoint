@@ -39,6 +39,7 @@ public class CheckpointAdapter {
                             final String message = "Current Checkpoint Interval: "
                                             + baseInterval;
                             log.info(message);
+
                             updatePeriod(p);
                             baseInterval = p;
                         }
@@ -63,7 +64,7 @@ public class CheckpointAdapter {
                         ? 5000L
                         : checkpointAdapterConfiguration.getRecoveryTime();
         this.isAdapterEnable = true;
-        this.diff = 0.5;
+        this.diff = 0.3;
         this.queue = new LinkedBlockingQueue<>();
 
         ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 10, 60,
@@ -116,7 +117,7 @@ public class CheckpointAdapter {
         // update when a checkpoint is completed
         coordinator.restartCheckpointScheduler(newPeriod);
         final String message =
-                "calculated period is 50% different from current period, "
+                "calculated period is 30% different from current period, "
                         + "checkpoint Period has been changed to: "
                         + newPeriod;
         log.info(message);
