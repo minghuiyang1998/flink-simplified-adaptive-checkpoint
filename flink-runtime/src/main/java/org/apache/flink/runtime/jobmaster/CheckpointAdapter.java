@@ -17,29 +17,30 @@ import java.util.concurrent.TimeUnit;
 
 public class CheckpointAdapter {
     private JobCheckpointAdapterConfiguration checkpointAdapterConfiguration;
-    private final CheckpointCoordinatorConfiguration chkConfig;
+    private long baseInterval;
 
     private final CheckpointCoordinator coordinator;
     private final long recoveryTime;
     private boolean isAdapterEnable;
     private final BlockingQueue<Long> queue;
+    private final double diff;
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
     final class Consumer implements Runnable {
         @Override
         public void run() {
-            while(!isAdapterEnable) {
+            while(isAdapterEnable) {
                 if(queue.size() > 0) {
                     try {
-                        long baseInterval = chkConfig.getCheckpointInterval();
-                        long p = queue.take();
+                        long p = queue.take() * 1000; // transfer to ms
                         long variation = (p - baseInterval) / baseInterval;
-                        if (variation > 0.2) {
-                            final String message = "current Checkpoint Interval: "
+                        if (variation > diff) {
+                            final String message = "Current Checkpoint Interval: "
                                             + baseInterval;
                             log.info(message);
                             updatePeriod(p);
+                            baseInterval = p;
                         }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -56,12 +57,13 @@ public class CheckpointAdapter {
 
         this.checkpointAdapterConfiguration = checkpointAdapterConfiguration;
         this.coordinator = coordinator;
-        this.chkConfig = chkConfig;
+        this.baseInterval = chkConfig.getCheckpointInterval();
         this.recoveryTime =
                 checkpointAdapterConfiguration == null
                         ? 5000L
                         : checkpointAdapterConfiguration.getRecoveryTime();
         this.isAdapterEnable = true;
+        this.diff = 0.5;
         this.queue = new LinkedBlockingQueue<>();
 
         ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 10, 60,
@@ -97,7 +99,7 @@ public class CheckpointAdapter {
         if (Double.isNaN(ideal) || Double.isNaN(inputRate)) return true;
 
         double maxData = (double) (recoveryTime / 1000) * ideal; // ideal: records per second
-        long newPeriod = (long) (maxData / inputRate);
+        long newPeriod = (long) (maxData / inputRate); // (records / million seconds)
 
         // Get rid of extreme data
         if (newPeriod == 0 || newPeriod == Long.MAX_VALUE) return true;
@@ -114,7 +116,7 @@ public class CheckpointAdapter {
         // update when a checkpoint is completed
         coordinator.restartCheckpointScheduler(newPeriod);
         final String message =
-                "calculated period is 20% different from current period, "
+                "calculated period is 50% different from current period, "
                         + "checkpoint Period has been changed to: "
                         + newPeriod;
         log.info(message);
