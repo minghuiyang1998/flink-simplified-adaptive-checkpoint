@@ -31,7 +31,6 @@ import org.apache.flink.runtime.executiongraph.JobStatusListener;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 import org.apache.flink.runtime.jobgraph.OperatorID;
 import org.apache.flink.runtime.jobgraph.tasks.CheckpointCoordinatorConfiguration;
-import org.apache.flink.runtime.jobmaster.CheckpointAdapter;
 import org.apache.flink.runtime.messages.Acknowledge;
 import org.apache.flink.runtime.messages.checkpoint.AcknowledgeCheckpoint;
 import org.apache.flink.runtime.messages.checkpoint.DeclineCheckpoint;
@@ -224,12 +223,6 @@ public class CheckpointCoordinator {
     private final CheckpointPlanCalculator checkpointPlanCalculator;
 
     private final ExecutionAttemptMappingProvider attemptMappingProvider;
-
-    private CheckpointAdapter checkpointAdapter;
-
-    public void setCheckpointAdapter(CheckpointAdapter checkpointAdapter) {
-        this.checkpointAdapter = checkpointAdapter;
-    }
 
     // --------------------------------------------------------------------------------------------
 
@@ -947,7 +940,6 @@ public class CheckpointCoordinator {
                         return false;
                     }
                     completePendingCheckpoint(checkpoint);
-                    checkpointAdapter.updatePeriod(checkpoint.getCheckpointID());
                 } catch (CheckpointException ce) {
                     onTriggerFailure(checkpoint, ce);
                     return false;

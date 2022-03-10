@@ -48,7 +48,9 @@ import org.apache.flink.runtime.jobgraph.IntermediateDataSetID;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 import org.apache.flink.runtime.jobgraph.OperatorID;
+import org.apache.flink.runtime.jobgraph.tasks.CheckpointCoordinatorConfiguration;
 import org.apache.flink.runtime.jobgraph.tasks.JobCheckpointAdapterConfiguration;
+import org.apache.flink.runtime.jobgraph.tasks.JobCheckpointingSettings;
 import org.apache.flink.runtime.jobmanager.OnCompletionActions;
 import org.apache.flink.runtime.jobmanager.PartitionProducerDisposedException;
 import org.apache.flink.runtime.jobmaster.factories.JobManagerJobMetricGroupFactory;
@@ -333,16 +335,14 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
 
         // get Checkpoint from schedulerNG
         CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
+        JobCheckpointingSettings snapshotSettings = jobGraph.getCheckpointingSettings();
+        CheckpointCoordinatorConfiguration chkConfig = snapshotSettings.getCheckpointCoordinatorConfiguration();
         // get Adapter config: from jobGraph
         JobCheckpointAdapterConfiguration ckpAdapterConfiguration =
                 this.jobGraph.getCkpAdapterConfiguration();
         // setup Adapter
         this.checkpointAdapter =
-                new CheckpointAdapter(ckpAdapterConfiguration, checkpointCoordinator);
-        // TODO: deal with null
-        if (checkpointCoordinator != null) {
-            checkpointCoordinator.setCheckpointAdapter(this.checkpointAdapter);
-        }
+                new CheckpointAdapter(chkConfig, ckpAdapterConfiguration, checkpointCoordinator);
 
         this.heartbeatServices = checkNotNull(heartbeatServices);
         this.taskManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
@@ -480,9 +480,9 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
     @Override
     public CompletableFuture<Acknowledge> submitTaskManagerRunningState(
             final TaskManagerRunningState taskManagerRunningState) {
-        System.out.println("jobMaster received data!");
+        log.info("jobMaster received data!");
         if (checkpointAdapter.dealWithMessageFromOneTaskExecutor(taskManagerRunningState)) {
-            System.out.println("Dealt successfully");
+            log.info("JobMaster Dealt successfully");
             return CompletableFuture.completedFuture(Acknowledge.get());
         }
         JobMasterException e =
