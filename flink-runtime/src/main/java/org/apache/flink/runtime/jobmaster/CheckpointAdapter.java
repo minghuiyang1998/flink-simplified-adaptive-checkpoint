@@ -97,13 +97,17 @@ public class CheckpointAdapter {
         log.info(message);
 
         // dealt with initial NaN
-        if (Double.isNaN(ideal) || Double.isNaN(inputRate)) return true;
+        if (Double.isNaN(ideal) || Double.isNaN(inputRate)) {
+            return true;
+        }
 
         double maxData = (double) (recoveryTime / 1000) * ideal; // ideal: records per second
         long newPeriod = (long) (maxData / inputRate); // (records / million seconds)
 
         // Get rid of extreme data
-        if (newPeriod == 0 || newPeriod == Long.MAX_VALUE) return true;
+        if (newPeriod == 0 || newPeriod == Long.MAX_VALUE) {
+            return true;
+        }
 
         try {
             queue.put(newPeriod);
