@@ -57,6 +57,7 @@ import org.apache.flink.runtime.state.StateBackend;
 import org.apache.flink.runtime.util.config.memory.ManagedMemoryUtils;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.checkpoint.WithMasterCheckpointHook;
+import org.apache.flink.streaming.api.environment.CheckpointAdapterConfig;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.ExecutionCheckpointingOptions;
 import org.apache.flink.streaming.api.operators.ChainingStrategy;
@@ -193,11 +194,7 @@ public class StreamingJobGraphGenerator {
                 id -> streamGraph.getStreamNode(id).getManagedMemorySlotScopeUseCases());
 
         configureCheckpointing();
-
-        long recoveryTime = streamGraph.getCheckpointAdapterConfig().getRecoveryTime();
-        JobCheckpointAdapterConfiguration checkpointAdapterConfiguration =
-                new JobCheckpointAdapterConfiguration(recoveryTime);
-        jobGraph.setCheckpointAdapterConfig(checkpointAdapterConfiguration);
+        configureCheckpointAdapter();
 
         jobGraph.setSavepointRestoreSettings(streamGraph.getSavepointRestoreSettings());
 
@@ -1219,6 +1216,23 @@ public class StreamingJobGraphGenerator {
             operatorConfig.setManagedMemoryFractionOperatorOfUseCase(
                     useCase, slotScopeUseCases.contains(useCase) ? 1.0 : 0.0);
         }
+    }
+
+    private void configureCheckpointAdapter() {
+        CheckpointAdapterConfig cfg = streamGraph.getCheckpointAdapterConfig();
+        long recoveryTime = cfg.getRecoveryTime();
+        long metricsInterval = cfg.getMetricsInterval();
+        long changeInterval = cfg.getChangeInterval();
+        double allowRange = cfg.getAllowRange();
+        boolean isDebounceMode = cfg.isDebounceMode();
+        JobCheckpointAdapterConfiguration checkpointAdapterConfiguration =
+                new JobCheckpointAdapterConfiguration(
+                        recoveryTime,
+                        metricsInterval,
+                        allowRange,
+                        changeInterval,
+                        isDebounceMode);
+        jobGraph.setCheckpointAdapterConfig(checkpointAdapterConfiguration);
     }
 
     private void configureCheckpointing() {

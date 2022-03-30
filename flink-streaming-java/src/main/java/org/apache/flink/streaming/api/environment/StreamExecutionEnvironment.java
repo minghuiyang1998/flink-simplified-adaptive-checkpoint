@@ -491,6 +491,25 @@ public class StreamExecutionEnvironment {
         return this;
     }
 
+    public StreamExecutionEnvironment setCheckpointAdapterMetricInterval(long metricInterval) {
+        checkpointAdapterConfig.setMetricsInterval(metricInterval);
+        return this;
+    }
+
+    public StreamExecutionEnvironment setCheckpointAdapterAllowRange(double allowRange) {
+        checkpointAdapterConfig.setAllowRange(allowRange);
+        return this;
+    }
+
+    public StreamExecutionEnvironment setCheckpointAdapterChangeInterval(long changeInterval) {
+        checkpointAdapterConfig.setChangeInterval(changeInterval);
+        return this;
+    }
+
+    public StreamExecutionEnvironment setCheckpointAdapterDebounceMode(boolean debounceMode) {
+        checkpointAdapterConfig.setDebounceMode(true);
+        return this;
+    }
     /**
      * Returns the checkpointing interval or -1 if checkpointing is disabled.
      *
@@ -500,6 +519,21 @@ public class StreamExecutionEnvironment {
         return checkpointAdapterConfig.getRecoveryTime();
     }
 
+    public long getCheckpointAdapterMetricInterval() {
+        return checkpointAdapterConfig.getMetricsInterval();
+    }
+
+    public double getCheckpointAdapterAllowRange() {
+        return checkpointAdapterConfig.getAllowRange();
+    }
+
+    public long getCheckpointAdapterChangeInterval() {
+        return checkpointAdapterConfig.getChangeInterval();
+    }
+
+    public boolean getCheckpointAdapterIsDebounceMode() {
+        return checkpointAdapterConfig.isDebounceMode();
+    }
     // ------------------------------------------------------------------------
     //  Checkpointing Settings
     // ------------------------------------------------------------------------

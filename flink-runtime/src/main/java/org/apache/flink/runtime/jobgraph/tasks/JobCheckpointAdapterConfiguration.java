@@ -26,18 +26,50 @@ import java.io.Serializable;
  */
 public class JobCheckpointAdapterConfiguration implements Serializable {
     public static final long DEFAULT_RECOVERY = 10000;
-    private long recoveryTime;
+    private final long recoveryTime;
+    private long metricsInterval;
+    private double allowRange;
+    private long changeInterval;
+    private boolean isDebounceMode;
 
     public long getRecoveryTime() {
         return recoveryTime;
     }
 
-    public void setRecoveryTime(long recoveryTime) {
-        this.recoveryTime = recoveryTime;
+    public long getMetricsInterval() {
+        return metricsInterval;
+    }
+
+    public double getAllowRange() {
+        return allowRange;
+    }
+
+    public long getChangeInterval() {
+        return changeInterval;
+    }
+
+    public boolean isDebounceMode() {
+        return isDebounceMode;
+    }
+    public boolean isAdapterEnable() {
+        return recoveryTime > 0;
     }
 
     public JobCheckpointAdapterConfiguration(long recoveryTime) {
         this.recoveryTime = recoveryTime;
+    }
+
+    public JobCheckpointAdapterConfiguration(
+            long recoveryTime,
+            long metricsInterval,
+            double allowRange,
+            long changeInterval,
+            boolean isDebounceMode) {
+        this.recoveryTime = recoveryTime;
+        this.metricsInterval = metricsInterval;
+        this.allowRange = allowRange;
+        this.changeInterval = changeInterval;
+        this.isDebounceMode = isDebounceMode;
     }
 
     public JobCheckpointAdapterConfiguration() {
