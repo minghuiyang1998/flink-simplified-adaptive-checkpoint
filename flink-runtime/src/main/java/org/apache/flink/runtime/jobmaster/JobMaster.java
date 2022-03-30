@@ -145,7 +145,7 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
 
     private final JobGraph jobGraph;
 
-    private final CheckpointAdapter checkpointAdapter;
+    @Nullable private CheckpointAdapter checkpointAdapter;
 
     private final Time rpcTimeout;
 
@@ -333,16 +333,19 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
                         jobManagerJobMetricGroup,
                         jobStatusListener);
 
-        // get Checkpoint from schedulerNG
+        // if checkpoint is not enable or not a periodic checkpoint, adapter will not be initiated
         CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
-        JobCheckpointingSettings snapshotSettings = jobGraph.getCheckpointingSettings();
-        CheckpointCoordinatorConfiguration chkConfig = snapshotSettings.getCheckpointCoordinatorConfiguration();
-        // get Adapter config: from jobGraph
-        JobCheckpointAdapterConfiguration ckpAdapterConfiguration =
-                this.jobGraph.getCkpAdapterConfiguration();
-        // setup Adapter
-        this.checkpointAdapter =
-                new CheckpointAdapter(chkConfig, ckpAdapterConfiguration, checkpointCoordinator);
+        if (checkpointCoordinator!= null && checkpointCoordinator.isPeriodicCheckpointingConfigured()) {
+            // get Checkpoint from schedulerNG
+            JobCheckpointingSettings snapshotSettings = jobGraph.getCheckpointingSettings();
+            CheckpointCoordinatorConfiguration chkConfig = snapshotSettings.getCheckpointCoordinatorConfiguration();
+            // get Adapter config: from jobGraph
+            JobCheckpointAdapterConfiguration ckpAdapterConfiguration =
+                    this.jobGraph.getCkpAdapterConfiguration();
+            // setup Adapter
+            this.checkpointAdapter =
+                    new CheckpointAdapter(chkConfig, ckpAdapterConfiguration, checkpointCoordinator);
+        }
 
         this.heartbeatServices = checkNotNull(heartbeatServices);
         this.taskManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
