@@ -335,7 +335,10 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
 
         // if checkpoint is not enable or not a periodic checkpoint, adapter will not be initiated
         CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
-        if (checkpointCoordinator!= null && checkpointCoordinator.isPeriodicCheckpointingConfigured()) {
+        boolean isAdapterEnable = this.jobGraph.getCkpAdapterConfiguration().isAdapterEnable();
+        if (checkpointCoordinator!= null
+                && checkpointCoordinator.isPeriodicCheckpointingConfigured()
+                && isAdapterEnable) {
             // get Checkpoint from schedulerNG
             JobCheckpointingSettings snapshotSettings = jobGraph.getCheckpointingSettings();
             CheckpointCoordinatorConfiguration chkConfig = snapshotSettings.getCheckpointCoordinatorConfiguration();
