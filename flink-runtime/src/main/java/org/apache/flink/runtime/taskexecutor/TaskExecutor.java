@@ -913,6 +913,31 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
         return CompletableFuture.completedFuture(Acknowledge.get());
     }
 
+    @Override
+    public CompletableFuture<Acknowledge> setSubmissionParams(ExecutionAttemptID executionAttemptID,
+                                                              long interval) {
+        log.debug(
+                "set checkpoint adapter submitting parameters {} for {}.",
+                executionAttemptID, interval);
+
+        final Task task = taskSlotTable.getTask(executionAttemptID);
+
+        if (task != null) {
+            task.triggerMetricsSubmission(interval);
+            return CompletableFuture.completedFuture(Acknowledge.get());
+        } else {
+            final String message =
+                    "TaskManager received a adapter setting request for unknown task "
+                            + executionAttemptID
+                            + '.';
+
+            log.debug(message);
+            return FutureUtils.completedExceptionally(
+                    new CheckpointException(
+                            message, CheckpointFailureReason.TASK_CHECKPOINT_FAILURE));
+        }
+    }
+
     // ----------------------------------------------------------------------
     // Heartbeat RPC
     // ----------------------------------------------------------------------

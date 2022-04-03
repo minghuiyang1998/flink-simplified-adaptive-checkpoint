@@ -1306,6 +1306,18 @@ public class Task
     // ------------------------------------------------------------------------
 
     /**
+     * Schedule metrics submission to checkpoint adapter in jobmaster
+     *
+     * @param interval Set the interval at which the checkpoint is reported.
+     * */
+    public void triggerMetricsSubmission(long interval) {
+        // TODO:
+        // set timer
+        // submit when complete a checkpoint,
+        // set a flag, and in "notifiedCompeleted" check the flag if true submit
+    }
+
+    /**
      * Calls the invokable to trigger a checkpoint.
      *
      * @param checkpointID The ID identifying the checkpoint.
