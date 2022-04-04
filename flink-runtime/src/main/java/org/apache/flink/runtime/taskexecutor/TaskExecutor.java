@@ -1846,8 +1846,11 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
         final ExecutionAttemptID executionAttemptID = taskManagerRunningState.getExecutionId();
 
         final String message =
-                "ExecutionID: " + executionAttemptID + " submitTaskManagerRunningState!"
-                        + " checkpoint: " + taskManagerRunningState.getCheckpointID();
+                "ExecutionID: "
+                        + executionAttemptID
+                        + " submitTaskManagerRunningState!"
+                        + " checkpoint: "
+                        + taskManagerRunningState.getCheckpointID();
         log.info(message);
 
         CompletableFuture<Acknowledge> futureAcknowledge =
