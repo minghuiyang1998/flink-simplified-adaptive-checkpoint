@@ -25,14 +25,8 @@ public class CheckpointAdapter {
                 if(queue.size() > 0) {
                     try {
                         long p = queue.take() * 1000; // transfer to ms
-                        long variation = (p - baseInterval) / baseInterval;
-                        if (variation > allowRange) {
-                            final String message = "Current Checkpoint Interval: "
-                                    + baseInterval;
-                            log.info(message);
-
+                        if (isOverAllowRange(p)) {
                             updatePeriod(p);
-                            baseInterval = p;
                         }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -52,10 +46,6 @@ public class CheckpointAdapter {
                 @Override
                 public void run() {
                     updatePeriod(minPeriod);
-                    baseInterval = minPeriod;
-                    final String message = "Current Checkpoint Interval: "
-                            + baseInterval;
-                    log.info(message);
                 }
             }, changeInterval, changeInterval);
 
@@ -82,10 +72,6 @@ public class CheckpointAdapter {
                 @Override
                 public void run() {
                     updatePeriod(minPeriod);
-                    baseInterval = minPeriod;
-                    final String message = "Current Checkpoint Interval: "
-                            + baseInterval;
-                    log.info(message);
                 }
             }, changeInterval, changeInterval);
 
@@ -93,8 +79,7 @@ public class CheckpointAdapter {
                 if(queue.size() > 0) {
                     try {
                         long p = queue.take() * 1000; // transfer to ms
-                        long variation = (p - baseInterval) / baseInterval;
-                        if (variation > allowRange) {
+                        if (isOverAllowRange(p)) {
                             minPeriod = Math.min(p, minPeriod);
                         }
                     } catch (InterruptedException e) {
@@ -115,18 +100,13 @@ public class CheckpointAdapter {
                 if(queue.size() > 0) {
                     try {
                         long p = queue.take() * 1000; // transfer to ms
-                        long variation = (p - baseInterval) / baseInterval;
-                        if (variation > allowRange) {
+                        if (isOverAllowRange(p)) {
                             minPeriod = Math.min(p, minPeriod);
                             timer.cancel();
                             timer.schedule(new TimerTask() {
                                 @Override
                                 public void run() {
                                     updatePeriod(minPeriod);
-                                    baseInterval = minPeriod;
-                                    final String message = "Current Checkpoint Interval: "
-                                            + baseInterval;
-                                    log.info(message);
                                 }
                             }, changeInterval);
                         }
@@ -231,13 +211,17 @@ public class CheckpointAdapter {
         return true;
     }
 
-    public void updatePeriod(long newPeriod) {
+    private boolean isOverAllowRange(long period) {
+        long variation = (period - baseInterval) / baseInterval;
+        return variation > allowRange;
+    }
+
+    private void updatePeriod(long newPeriod) {
         // update when a checkpoint is completed
         coordinator.restartCheckpointScheduler(newPeriod);
-        final String message =
-                "calculated period is 30% different from current period, "
-                        + "checkpoint Period has been changed to: "
-                        + newPeriod;
+        baseInterval = newPeriod;
+        final String message = "Current Checkpoint Interval was changed to: "
+                + baseInterval;
         log.info(message);
     }
 
