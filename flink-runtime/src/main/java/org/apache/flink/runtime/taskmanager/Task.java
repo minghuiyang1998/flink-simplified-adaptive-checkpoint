@@ -106,6 +106,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -299,6 +301,10 @@ public class Task
     /** The only one throughput meter per subtask. */
     private ThroughputCalculator throughputCalculator;
 
+    /** If submit metrics data to jobMaster once after completing a checkpoint*/
+    private boolean isSubmitAfterCheckpoint = true;
+    /** Periodically submit data to jobMaster */
+    private Timer timer = new Timer();
     /**
      * <b>IMPORTANT:</b> This constructor may not start any work that would need to be undone in the
      * case of a failing task deployment.
@@ -1311,10 +1317,22 @@ public class Task
      * @param interval Set the interval at which the checkpoint is reported.
      * */
     public void triggerMetricsSubmission(long interval) {
-        // TODO:
-        // set timer
-        // submit when complete a checkpoint,
-        // set a flag, and in "notifiedCompeleted" check the flag if true submit
+        if (interval == -1) {
+            isSubmitAfterCheckpoint = true;
+        } else {
+            isSubmitAfterCheckpoint = false;
+            // set timer
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    TaskIOMetricGroup taskIOMetricGroup =
+                            metrics.getIOMetricGroup(); // include numRecordIn + busy
+                    taskManagerActions.submitTaskExecutorRunningStatus(
+                            new TaskManagerRunningState(executionId, 0L, taskIOMetricGroup));
+                }
+            }, interval, interval);
+            // TODO: cancel timer ?
+        }
     }
 
     /**
@@ -1412,10 +1430,12 @@ public class Task
     public void notifyCheckpointComplete(final long checkpointID) {
         final TaskInvokable invokable = this.invokable;
 
-        TaskIOMetricGroup taskIOMetricGroup =
-                metrics.getIOMetricGroup(); // include numRecordIn + busy
-        taskManagerActions.submitTaskExecutorRunningStatus(
-                new TaskManagerRunningState(executionId, checkpointID, taskIOMetricGroup));
+        if (isSubmitAfterCheckpoint) {
+            TaskIOMetricGroup taskIOMetricGroup =
+                    metrics.getIOMetricGroup(); // include numRecordIn + busy
+            taskManagerActions.submitTaskExecutorRunningStatus(
+                    new TaskManagerRunningState(executionId, checkpointID, taskIOMetricGroup));
+        }
 
         if (executionState == ExecutionState.RUNNING) {
             checkState(invokable instanceof CheckpointableTask, "invokable is not checkpointable");
