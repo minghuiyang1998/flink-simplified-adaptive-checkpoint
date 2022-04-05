@@ -8,6 +8,8 @@ import org.apache.flink.runtime.taskmanager.TaskManagerRunningState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -16,18 +18,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class CheckpointAdapter {
-    private JobCheckpointAdapterConfiguration checkpointAdapterConfiguration;
-    private long baseInterval;
-
-    private final CheckpointCoordinator coordinator;
-    private final long recoveryTime;
-    private boolean isAdapterEnable;
-    private final BlockingQueue<Long> queue;
-    private final double diff;
-
-    protected final Logger log = LoggerFactory.getLogger(getClass());
-
-    final class Consumer implements Runnable {
+    final class ConsumerRange implements Runnable {
         @Override
         public void run() {
             while(isAdapterEnable) {
@@ -35,9 +26,9 @@ public class CheckpointAdapter {
                     try {
                         long p = queue.take() * 1000; // transfer to ms
                         long variation = (p - baseInterval) / baseInterval;
-                        if (variation > diff) {
+                        if (variation > allowRange) {
                             final String message = "Current Checkpoint Interval: "
-                                            + baseInterval;
+                                    + baseInterval;
                             log.info(message);
 
                             updatePeriod(p);
@@ -51,26 +42,149 @@ public class CheckpointAdapter {
         }
     }
 
+    final class ConsumerPeriod implements Runnable {
+        private long minPeriod = Long.MAX_VALUE;
+        private final Timer timer = new Timer();
+
+        @Override
+        public void run() {
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    updatePeriod(minPeriod);
+                    baseInterval = minPeriod;
+                    final String message = "Current Checkpoint Interval: "
+                            + baseInterval;
+                    log.info(message);
+                }
+            }, changeInterval, changeInterval);
+
+            while(isAdapterEnable) {
+                if(queue.size() > 0) {
+                    try {
+                        long p = queue.take() * 1000; // transfer to ms
+                        minPeriod = Math.min(p, minPeriod);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    final class ConsumerRangePeriod implements Runnable {
+        private long minPeriod = Long.MAX_VALUE;
+        private final Timer timer = new Timer();
+
+        @Override
+        public void run() {
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    updatePeriod(minPeriod);
+                    baseInterval = minPeriod;
+                    final String message = "Current Checkpoint Interval: "
+                            + baseInterval;
+                    log.info(message);
+                }
+            }, changeInterval, changeInterval);
+
+            while(isAdapterEnable) {
+                if(queue.size() > 0) {
+                    try {
+                        long p = queue.take() * 1000; // transfer to ms
+                        long variation = (p - baseInterval) / baseInterval;
+                        if (variation > allowRange) {
+                            minPeriod = Math.min(p, minPeriod);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    final class ConsumerDebounce implements Runnable {
+        private long minPeriod = Long.MAX_VALUE;
+        private final Timer timer = new Timer();
+
+        @Override
+        public void run() {
+            while(isAdapterEnable) {
+                if(queue.size() > 0) {
+                    try {
+                        long p = queue.take() * 1000; // transfer to ms
+                        long variation = (p - baseInterval) / baseInterval;
+                        if (variation > allowRange) {
+                            minPeriod = Math.min(p, minPeriod);
+                            timer.cancel();
+                            timer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    updatePeriod(minPeriod);
+                                    baseInterval = minPeriod;
+                                    final String message = "Current Checkpoint Interval: "
+                                            + baseInterval;
+                                    log.info(message);
+                                }
+                            }, changeInterval);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    private JobCheckpointAdapterConfiguration checkpointAdapterConfiguration;
+    private long baseInterval;
+    private final CheckpointCoordinator coordinator;
+    private boolean isAdapterEnable;
+    private final BlockingQueue<Long> queue;
+
+    private final long recoveryTime;
+    private final double allowRange;
+    private final long changeInterval;
+
+    protected final Logger log = LoggerFactory.getLogger(getClass());
+
+
     public CheckpointAdapter(
             CheckpointCoordinatorConfiguration chkConfig,
             JobCheckpointAdapterConfiguration checkpointAdapterConfiguration,
             CheckpointCoordinator coordinator) {
-
         this.checkpointAdapterConfiguration = checkpointAdapterConfiguration;
         this.coordinator = coordinator;
         this.baseInterval = chkConfig.getCheckpointInterval();
-        this.recoveryTime =
-                checkpointAdapterConfiguration == null
-                        ? 5000L
-                        : checkpointAdapterConfiguration.getRecoveryTime();
         this.isAdapterEnable = true;
-        this.diff = 0.3;
         this.queue = new LinkedBlockingQueue<>();
 
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 10, 60,
-                TimeUnit.SECONDS, new ArrayBlockingQueue<>(20));
-        Consumer consumer = new Consumer();
-        CompletableFuture.runAsync(consumer, executor).thenRunAsync(executor::shutdown);
+        this.recoveryTime = checkpointAdapterConfiguration.getRecoveryTime();
+        this.allowRange = checkpointAdapterConfiguration.getAllowRange();
+        this.changeInterval = checkpointAdapterConfiguration.getChangeInterval();
+        boolean isDebounceMode = checkpointAdapterConfiguration.isDebounceMode();
+
+        boolean withPeriod = changeInterval > 0;
+        boolean withRange = allowRange > 0;
+        if (withPeriod || withRange) {
+            ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 10, 60,
+                    TimeUnit.SECONDS, new ArrayBlockingQueue<>(20));
+            Runnable consumer;
+            if (withPeriod && withRange) {
+                if (isDebounceMode) {
+                    consumer = new ConsumerDebounce();
+                } else {
+                    consumer = new ConsumerRangePeriod();
+                }
+            } else if (withPeriod) {
+                consumer = new ConsumerPeriod();
+            } else {
+                consumer = new ConsumerRange();
+            }
+            CompletableFuture.runAsync(consumer, executor).thenRunAsync(executor::shutdown);
+        }
     }
 
     public void setAdapterEnable(boolean adapterEnable) {

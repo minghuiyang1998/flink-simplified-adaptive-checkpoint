@@ -16,7 +16,7 @@ public class CheckpointAdapterConfig {
      * triggers a period change operation
      * default value is 10%
      * */
-    private double allowRange = 0.1;
+    private double allowRange = -1;
     /** The modification is performed only once in a time range,
      * If this value is not set and only allowRange is set,
      * changes will be triggered as soon as they occur.
