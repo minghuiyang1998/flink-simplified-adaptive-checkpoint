@@ -7,10 +7,10 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /** Configuration that captures all adapter related settings. */
 @Public
 public class CheckpointAdapterConfig {
-    /** the same as user Tolerant time. */
+    /** the same as user tolerant time. */
     private long recoveryTime = -1;
     /** The interval between data submissions of taskExecutor,
-     * The default timing is to complete checkpoint commit once*/
+     * The default timing is -1 , which means commit once after completing a checkpoint */
     private long metricsInterval = -1;
     /** A new period calculated from the metrics outside this range
      * triggers a period change operation
