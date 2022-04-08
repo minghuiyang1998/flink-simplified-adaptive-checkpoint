@@ -49,6 +49,7 @@ public class CheckpointAdapter {
                 }
             }, changeInterval, changeInterval);
 
+            // deal with data as much as it can in one period
             while(isAdapterEnable) {
                 if(queue.size() > 0) {
                     try {
