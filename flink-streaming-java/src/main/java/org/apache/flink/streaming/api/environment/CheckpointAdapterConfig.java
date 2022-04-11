@@ -71,11 +71,15 @@ public class CheckpointAdapterConfig {
     /**
      * Creates a deep copy of the provided {@link CheckpointAdapterConfig}.
      *
-     * @param checkpointAdapterConfig the config to copy.
+     * @param config the config to copy.
      */
-    public CheckpointAdapterConfig(final CheckpointAdapterConfig checkpointAdapterConfig) {
-        checkNotNull(checkpointAdapterConfig);
-        this.recoveryTime = checkpointAdapterConfig.recoveryTime;
+    public CheckpointAdapterConfig(final CheckpointAdapterConfig config) {
+        checkNotNull(config);
+        this.recoveryTime = config.recoveryTime;
+        this.allowRange = config.allowRange;
+        this.changeInterval = config.changeInterval;
+        this.metricsInterval = config.metricsInterval;
+        this.isDebounceMode = config.isDebounceMode;
     }
 
     public CheckpointAdapterConfig() {}
