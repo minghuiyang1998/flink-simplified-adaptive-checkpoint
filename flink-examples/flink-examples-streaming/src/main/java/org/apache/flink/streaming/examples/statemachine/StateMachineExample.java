@@ -74,7 +74,10 @@ public class StateMachineExample {
         // create the environment to create streams and configure execution
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.enableCheckpointing(3000L);
-        env.enableCheckpointAdapter(1000L);
+        env.enableCheckpointAdapter(10000L);
+        env.setCheckpointAdapterMetricInterval(1000L);
+        env.setCheckpointAdapterAllowRange(0.4);
+        env.setCheckpointAdapterChangeInterval(1000L);
 
         final String stateBackend = params.get("backend", "memory");
         if ("hashmap".equals(stateBackend)) {

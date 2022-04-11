@@ -1325,6 +1325,7 @@ public class Task
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
+                    LOG.info(interval + " has passed, submit metrics!");
                     TaskIOMetricGroup taskIOMetricGroup =
                             metrics.getIOMetricGroup(); // include numRecordIn + busy
                     taskManagerActions.submitTaskExecutorRunningStatus(

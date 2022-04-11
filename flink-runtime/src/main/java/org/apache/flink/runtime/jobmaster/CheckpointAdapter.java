@@ -26,6 +26,7 @@ public class CheckpointAdapter {
                     try {
                         long p = queue.take() * 1000; // transfer to ms
                         if (isOverAllowRange(p)) {
+                            log.info("over allowRange, change checkpoint interval");
                             updatePeriod(p);
                         }
                     } catch (InterruptedException e) {
@@ -45,6 +46,7 @@ public class CheckpointAdapter {
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
+                    log.info(changeInterval + " has passed, change checkpoint interval!");
                     updatePeriod(minPeriod);
                 }
             }, changeInterval, changeInterval);
@@ -72,6 +74,7 @@ public class CheckpointAdapter {
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
+                    log.info(changeInterval + " has passed, change checkpoint interval!");
                     updatePeriod(minPeriod);
                 }
             }, changeInterval, changeInterval);
@@ -81,6 +84,7 @@ public class CheckpointAdapter {
                     try {
                         long p = queue.take() * 1000; // transfer to ms
                         if (isOverAllowRange(p)) {
+                            log.info("over allowRange, store minPeriod");
                             minPeriod = Math.min(p, minPeriod);
                         }
                     } catch (InterruptedException e) {
@@ -102,11 +106,14 @@ public class CheckpointAdapter {
                     try {
                         long p = queue.take() * 1000; // transfer to ms
                         if (isOverAllowRange(p)) {
+                            log.info("over allowRange, store minPeriod");
                             minPeriod = Math.min(p, minPeriod);
                             timer.cancel();
+                            log.info("start timer");
                             timer.schedule(new TimerTask() {
                                 @Override
                                 public void run() {
+                                    log.info("start timer and change interval after " + changeInterval);
                                     updatePeriod(minPeriod);
                                 }
                             }, changeInterval);
@@ -149,19 +156,26 @@ public class CheckpointAdapter {
 
         boolean withPeriod = changeInterval > 0;
         boolean withRange = allowRange > 0;
+        log.info("changeInterval:" + changeInterval);
+        log.info("allowRange:" + allowRange);
+        log.info("isDebounceMode:" + isDebounceMode);
         if (withPeriod || withRange) {
             ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 10, 60,
                     TimeUnit.SECONDS, new ArrayBlockingQueue<>(20));
             Runnable consumer;
             if (withPeriod && withRange) {
                 if (isDebounceMode) {
+                    log.info("set up a <Debounce> consumer");
                     consumer = new ConsumerDebounce();
                 } else {
+                    log.info("set up a <RangePeriod> consumer");
                     consumer = new ConsumerRangePeriod();
                 }
             } else if (withPeriod) {
+                log.info("set up a <Period> consumer");
                 consumer = new ConsumerPeriod();
             } else {
+                log.info("set up a <Period> consumer");
                 consumer = new ConsumerRange();
             }
             CompletableFuture.runAsync(consumer, executor).thenRunAsync(executor::shutdown);

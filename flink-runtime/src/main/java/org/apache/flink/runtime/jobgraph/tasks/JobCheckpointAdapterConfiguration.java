@@ -72,6 +72,22 @@ public class JobCheckpointAdapterConfiguration implements Serializable {
         return recoveryTime > 0;
     }
 
+    public void setMetricsInterval(long metricsInterval) {
+        this.metricsInterval = metricsInterval;
+    }
+
+    public void setAllowRange(double allowRange) {
+        this.allowRange = allowRange;
+    }
+
+    public void setChangeInterval(long changeInterval) {
+        this.changeInterval = changeInterval;
+    }
+
+    public void setDebounceMode(boolean debounceMode) {
+        isDebounceMode = debounceMode;
+    }
+
     public JobCheckpointAdapterConfiguration(long recoveryTime) {
         this.recoveryTime = recoveryTime;
     }

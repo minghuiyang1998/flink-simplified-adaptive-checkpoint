@@ -16,9 +16,14 @@ you set up **_these 2 parts and periodic checkpoint_** properly,
 otherwise the adapter will not work properly: 
 1. get metrics from each task
 2. calculate and update checkpoint interval referring to metrics
-## Set up periodic checkpoint
+## Set up periodic checkpoint and set up adapter
 ```java
 env.enableCheckpointing(3000L);
+env.enableCheckpointAdapter(10000L); 
+/** set up recoveryTime without set up metrics submission and update strategy,
+ the metrics will be submitted after completing each checkpoint and checkpoint
+ interval will not be updated
+*/
 ```
 ## Set up metrics submission
 There are 2 ways for each task to submit metrics:

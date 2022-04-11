@@ -487,7 +487,7 @@ public class StreamExecutionEnvironment {
     }
 
     public StreamExecutionEnvironment enableCheckpointAdapter() {
-        checkpointAdapterConfig.setRecoveryTime(10000);
+        checkpointAdapterConfig.setRecoveryTime(10000L);
         return this;
     }
 
