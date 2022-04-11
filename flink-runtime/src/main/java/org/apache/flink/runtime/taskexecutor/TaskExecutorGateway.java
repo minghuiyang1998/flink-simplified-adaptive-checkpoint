@@ -126,13 +126,12 @@ public interface TaskExecutorGateway
      * Set the data reporting parameters required by the checkpoint adapter.
      *
      * @param executionAttemptID identifying the task
-     * @param interval Set the interval at which the checkpoint is reported.
-     * If the interval is -1, the checkpoint is reported after each checkpoint
-     * @return Future acknowledge that the sumbit  was received
-     * */
+     * @param interval Set the interval at which the checkpoint is reported. If the interval is -1,
+     *     the checkpoint is reported after each checkpoint
+     * @return Future acknowledge that the sumbit was received
+     */
     CompletableFuture<Acknowledge> setSubmissionParams(
-            ExecutionAttemptID executionAttemptID,
-            long interval);
+            ExecutionAttemptID executionAttemptID, long interval);
 
     /**
      * Trigger the checkpoint for the given task. The checkpoint is identified by the checkpoint ID

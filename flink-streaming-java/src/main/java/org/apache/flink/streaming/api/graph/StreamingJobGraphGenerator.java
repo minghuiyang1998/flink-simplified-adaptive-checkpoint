@@ -1227,11 +1227,7 @@ public class StreamingJobGraphGenerator {
         boolean isDebounceMode = cfg.isDebounceMode();
         JobCheckpointAdapterConfiguration checkpointAdapterConfiguration =
                 new JobCheckpointAdapterConfiguration(
-                        recoveryTime,
-                        metricsInterval,
-                        allowRange,
-                        changeInterval,
-                        isDebounceMode);
+                        recoveryTime, metricsInterval, allowRange, changeInterval, isDebounceMode);
         jobGraph.setCheckpointAdapterConfig(checkpointAdapterConfiguration);
     }
 

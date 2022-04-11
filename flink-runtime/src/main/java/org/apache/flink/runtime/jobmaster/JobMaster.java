@@ -336,18 +336,20 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
         // if checkpoint is not enable or not a periodic checkpoint, adapter will not be initiated
         CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
         boolean isAdapterEnable = this.jobGraph.getCkpAdapterConfiguration().isAdapterEnable();
-        if (checkpointCoordinator!= null
+        if (checkpointCoordinator != null
                 && checkpointCoordinator.isPeriodicCheckpointingConfigured()
                 && isAdapterEnable) {
             // get Checkpoint from schedulerNG
             JobCheckpointingSettings snapshotSettings = jobGraph.getCheckpointingSettings();
-            CheckpointCoordinatorConfiguration chkConfig = snapshotSettings.getCheckpointCoordinatorConfiguration();
+            CheckpointCoordinatorConfiguration chkConfig =
+                    snapshotSettings.getCheckpointCoordinatorConfiguration();
             // get Adapter config: from jobGraph
             JobCheckpointAdapterConfiguration ckpAdapterConfiguration =
                     this.jobGraph.getCkpAdapterConfiguration();
             // setup Adapter
             this.checkpointAdapter =
-                    new CheckpointAdapter(chkConfig, ckpAdapterConfiguration, checkpointCoordinator);
+                    new CheckpointAdapter(
+                            chkConfig, ckpAdapterConfiguration, checkpointCoordinator);
         }
 
         this.heartbeatServices = checkNotNull(heartbeatServices);
@@ -926,16 +928,15 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
     private void broadcastSubmissionParams() {
         for (ResourceID id : registeredTaskManagers.keySet()) {
             // get all executions run in the TaskExecutor
-            Set<ExecutionAttemptID> attemptIDs = executionDeploymentTracker
-                    .getExecutionsOn(id)
-                    .keySet();
+            Set<ExecutionAttemptID> attemptIDs =
+                    executionDeploymentTracker.getExecutionsOn(id).keySet();
             // get the TaskExecutorGateway/TaskManagerGateway
             Tuple2<TaskManagerLocation, TaskExecutorGateway> taskManagerConnection =
                     registeredTaskManagers.get(id);
             // set checkpoint adapter params in all tasks run in this TaskManager
-            for (ExecutionAttemptID aid:attemptIDs) {
-                taskManagerConnection.f1.setSubmissionParams(aid,
-                        this.jobGraph.getCkpAdapterConfiguration().getMetricsInterval());
+            for (ExecutionAttemptID aid : attemptIDs) {
+                taskManagerConnection.f1.setSubmissionParams(
+                        aid, this.jobGraph.getCkpAdapterConfiguration().getMetricsInterval());
             }
         }
     }

@@ -301,7 +301,7 @@ public class Task
     /** The only one throughput meter per subtask. */
     private ThroughputCalculator throughputCalculator;
 
-    /** If submit metrics data to jobMaster once after completing a checkpoint*/
+    /** If submit metrics data to jobMaster once after completing a checkpoint */
     private boolean isSubmitAfterCheckpoint = true;
     /** Periodically submit data to jobMaster */
     private Timer timer = new Timer();
@@ -1315,23 +1315,27 @@ public class Task
      * Schedule metrics submission to checkpoint adapter in jobmaster
      *
      * @param interval Set the interval at which the checkpoint is reported.
-     * */
+     */
     public void triggerMetricsSubmission(long interval) {
         if (interval == -1) {
             isSubmitAfterCheckpoint = true;
         } else {
             isSubmitAfterCheckpoint = false;
             // set timer
-            timer.scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    LOG.info(interval + " has passed, submit metrics!");
-                    TaskIOMetricGroup taskIOMetricGroup =
-                            metrics.getIOMetricGroup(); // include numRecordIn + busy
-                    taskManagerActions.submitTaskExecutorRunningStatus(
-                            new TaskManagerRunningState(executionId, 0L, taskIOMetricGroup));
-                }
-            }, interval, interval);
+            timer.scheduleAtFixedRate(
+                    new TimerTask() {
+                        @Override
+                        public void run() {
+                            LOG.info(interval + " has passed, submit metrics!");
+                            TaskIOMetricGroup taskIOMetricGroup =
+                                    metrics.getIOMetricGroup(); // include numRecordIn + busy
+                            taskManagerActions.submitTaskExecutorRunningStatus(
+                                    new TaskManagerRunningState(
+                                            executionId, 0L, taskIOMetricGroup));
+                        }
+                    },
+                    interval,
+                    interval);
             // TODO: cancel timer ?
         }
     }

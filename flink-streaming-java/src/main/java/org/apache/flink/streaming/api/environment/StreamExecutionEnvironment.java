@@ -513,8 +513,9 @@ public class StreamExecutionEnvironment {
     /**
      * Returns the checkpointing interval or -1 if checkpointing is disabled.
      *
-     * @return The recovery time or -1
+     * @return The recovery time or -1.
      */
+
     public long getCheckpointAdapterRecoveryTime() {
         return checkpointAdapterConfig.getRecoveryTime();
     }

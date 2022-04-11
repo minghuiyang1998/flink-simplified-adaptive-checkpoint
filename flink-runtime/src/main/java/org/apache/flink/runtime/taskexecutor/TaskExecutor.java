@@ -914,11 +914,12 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
     }
 
     @Override
-    public CompletableFuture<Acknowledge> setSubmissionParams(ExecutionAttemptID executionAttemptID,
-                                                              long interval) {
+    public CompletableFuture<Acknowledge> setSubmissionParams(
+            ExecutionAttemptID executionAttemptID, long interval) {
         log.debug(
                 "set checkpoint adapter submitting parameters {} for {}.",
-                executionAttemptID, interval);
+                executionAttemptID,
+                interval);
 
         final Task task = taskSlotTable.getTask(executionAttemptID);
 
@@ -1871,8 +1872,11 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
         final ExecutionAttemptID executionAttemptID = taskManagerRunningState.getExecutionId();
 
         final String message =
-                "ExecutionID: " + executionAttemptID + " submitTaskManagerRunningState!"
-                        + " checkpoint: " + taskManagerRunningState.getCheckpointID();
+                "ExecutionID: "
+                        + executionAttemptID
+                        + " submitTaskManagerRunningState!"
+                        + " checkpoint: "
+                        + taskManagerRunningState.getCheckpointID();
         log.info(message);
 
         CompletableFuture<Acknowledge> futureAcknowledge =

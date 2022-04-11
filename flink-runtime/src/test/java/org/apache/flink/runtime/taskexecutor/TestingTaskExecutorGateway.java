@@ -237,8 +237,7 @@ public class TestingTaskExecutorGateway implements TaskExecutorGateway {
 
     @Override
     public CompletableFuture<Acknowledge> setSubmissionParams(
-            ExecutionAttemptID executionAttemptID,
-            long interval) {
+            ExecutionAttemptID executionAttemptID, long interval) {
         return null;
     }
 

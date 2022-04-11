@@ -99,7 +99,6 @@ public class TestUtils {
         checkpointAdapterConfiguration.setChangeInterval(5000L);
         checkpointAdapterConfiguration.setMetricsInterval(1000L);
 
-
         // enable checkpointing which is required to resume from a savepoint
         final CheckpointCoordinatorConfiguration checkpointCoordinatorConfiguration =
                 CheckpointCoordinatorConfiguration.builder()
