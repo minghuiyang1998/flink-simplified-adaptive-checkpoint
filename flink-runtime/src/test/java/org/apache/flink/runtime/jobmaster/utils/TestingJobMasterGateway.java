@@ -21,6 +21,7 @@ package org.apache.flink.runtime.jobmaster.utils;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.tuple.Tuple6;
@@ -330,6 +331,11 @@ public class TestingJobMasterGateway implements JobMasterGateway {
     @Override
     public CompletableFuture<Acknowledge> submitTaskManagerRunningState(
             TaskManagerRunningState taskManagerRunningState) {
+        return null;
+    }
+
+    @Override
+    public CompletableFuture<Tuple2<Boolean, Long>> requestMetricsInterval() {
         return null;
     }
 

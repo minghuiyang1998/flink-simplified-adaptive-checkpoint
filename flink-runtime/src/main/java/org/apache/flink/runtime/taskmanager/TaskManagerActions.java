@@ -56,4 +56,8 @@ public interface TaskManagerActions {
             final TaskManagerRunningState taskManagerRunningState) {
         return;
     };
+
+    default void requestCheckpointAdapterConfig(ExecutionAttemptID executionAttemptID) {
+        return;
+    };
 }

@@ -21,6 +21,7 @@ package org.apache.flink.runtime.taskexecutor;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.management.jmx.JMXService;
 import org.apache.flink.runtime.accumulators.AccumulatorSnapshot;
 import org.apache.flink.runtime.blob.BlobCacheService;
@@ -911,32 +912,6 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
             Collection<IntermediateDataSetID> dataSetsToRelease, Time timeout) {
         partitionTracker.stopTrackingAndReleaseClusterPartitions(dataSetsToRelease);
         return CompletableFuture.completedFuture(Acknowledge.get());
-    }
-
-    @Override
-    public CompletableFuture<Acknowledge> setSubmissionParams(
-            ExecutionAttemptID executionAttemptID, long interval) {
-        log.debug(
-                "set checkpoint adapter submitting parameters {} for {}.",
-                executionAttemptID,
-                interval);
-
-        final Task task = taskSlotTable.getTask(executionAttemptID);
-
-        if (task != null) {
-            task.triggerMetricsSubmission(interval);
-            return CompletableFuture.completedFuture(Acknowledge.get());
-        } else {
-            final String message =
-                    "TaskManager received a adapter setting request for unknown task "
-                            + executionAttemptID
-                            + '.';
-
-            log.debug(message);
-            return FutureUtils.completedExceptionally(
-                    new CheckpointException(
-                            message, CheckpointFailureReason.TASK_CHECKPOINT_FAILURE));
-        }
     }
 
     // ----------------------------------------------------------------------
@@ -1866,6 +1841,42 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
         }
     }
 
+    private void requestCheckpointAdapterConfig(
+            final JobMasterGateway jobMasterGateway,
+            ExecutionAttemptID executionAttemptID
+    ) {
+        CompletableFuture<Tuple2<Boolean, Long>> configFuture =
+                jobMasterGateway.requestMetricsInterval();
+
+        configFuture.thenAccept(config -> {
+            boolean isAdatperEnable = config.f0;
+            long interval = config.f1;
+            log.debug(
+                    "set checkpoint adapter submitting parameters {} for {}.",
+                    executionAttemptID,
+                    interval);
+            final Task task = taskSlotTable.getTask(executionAttemptID);
+            if (task != null) {
+                task.triggerMetricsSubmission(isAdatperEnable, interval);
+            } else {
+                final String message =
+                        "TaskManager received a adapter setting request for unknown task "
+                                + executionAttemptID
+                                + '.';
+
+                log.debug(message);
+            }
+        });
+
+        configFuture.whenCompleteAsync(
+                (ack, throwable) -> {
+                    if (throwable != null) {
+                        log.error(throwable.getMessage());
+                    }
+                },
+        getMainThreadExecutor());
+    }
+
     private void submitTaskManagerRunningState(
             final JobMasterGateway jobMasterGateway,
             final TaskManagerRunningState taskManagerRunningState) {
@@ -2389,6 +2400,11 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
                 final TaskManagerRunningState taskManagerRunningState) {
             TaskExecutor.this.submitTaskManagerRunningState(
                     jobMasterGateway, taskManagerRunningState);
+        }
+
+        @Override
+        public void requestCheckpointAdapterConfig(ExecutionAttemptID executionAttemptID) {
+            TaskExecutor.this.requestCheckpointAdapterConfig(jobMasterGateway, executionAttemptID);
         }
     }
 

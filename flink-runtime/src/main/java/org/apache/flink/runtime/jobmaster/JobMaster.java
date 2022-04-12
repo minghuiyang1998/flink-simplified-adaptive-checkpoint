@@ -501,6 +501,12 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
     }
 
     @Override
+    public CompletableFuture<Tuple2<Boolean, Long>> requestMetricsInterval() {
+        long metricsInterval = this.jobGraph.getCkpAdapterConfiguration().getMetricsInterval();
+        return CompletableFuture.completedFuture(new Tuple2<>(isCheckpointAdapterEnable, metricsInterval));
+    }
+
+    @Override
     public CompletableFuture<SerializedInputSplit> requestNextInputSplit(
             final JobVertexID vertexID, final ExecutionAttemptID executionAttempt) {
 
@@ -921,26 +927,6 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
                 getFencingToken());
 
         startScheduling();
-        // periodic checkpoint + recovery time > 0
-        if (isCheckpointAdapterEnable) {
-            broadcastSubmissionParams();
-        }
-    }
-
-    private void broadcastSubmissionParams() {
-        for (ResourceID id : registeredTaskManagers.keySet()) {
-            // get all executions run in the TaskExecutor
-            Set<ExecutionAttemptID> attemptIDs =
-                    executionDeploymentTracker.getExecutionsOn(id).keySet();
-            // get the TaskExecutorGateway/TaskManagerGateway
-            Tuple2<TaskManagerLocation, TaskExecutorGateway> taskManagerConnection =
-                    registeredTaskManagers.get(id);
-            // set checkpoint adapter params in all tasks run in this TaskManager
-            for (ExecutionAttemptID aid : attemptIDs) {
-                taskManagerConnection.f1.setSubmissionParams(
-                        aid, this.jobGraph.getCkpAdapterConfiguration().getMetricsInterval());
-            }
-        }
     }
 
     private void startJobMasterServices() throws Exception {

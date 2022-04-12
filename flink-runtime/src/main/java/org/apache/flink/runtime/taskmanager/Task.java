@@ -1102,6 +1102,10 @@ public class Task
                         executionId,
                         currentState,
                         newState);
+                if (newState == ExecutionState.RUNNING) {
+                    // not waiting for result, result will be added to task automatically
+                    taskManagerActions.requestCheckpointAdapterConfig(executionId);
+                }
             } else {
                 LOG.warn(
                         "{} ({}) switched from {} to {} with failure cause: {}",
@@ -1318,8 +1322,8 @@ public class Task
      *
      * @param interval Set the interval at which the checkpoint is reported.
      */
-    public void triggerMetricsSubmission(long interval) {
-        isAdapterEnable = true;
+    public void triggerMetricsSubmission(boolean isCkpAdapterEnable, long interval) {
+        isAdapterEnable = isCkpAdapterEnable;
         if (interval == -1) {
             isSubmitAfterCheckpoint = true;
         } else {
@@ -1329,12 +1333,12 @@ public class Task
                     new TimerTask() {
                         @Override
                         public void run() {
-                            LOG.info(interval + " has passed, submit metrics!");
+                            LOG.info(interval + "ms passed, submit metrics!");
                             TaskIOMetricGroup taskIOMetricGroup =
                                     metrics.getIOMetricGroup(); // include numRecordIn + busy
                             taskManagerActions.submitTaskExecutorRunningStatus(
                                     new TaskManagerRunningState(
-                                            executionId, 0L, taskIOMetricGroup));
+                                            executionId, -1, taskIOMetricGroup));
                         }
                     },
                     interval,

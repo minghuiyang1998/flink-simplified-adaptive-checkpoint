@@ -120,12 +120,6 @@ public class TaskExecutorGatewayDecoratorBase implements TaskExecutorGateway {
     }
 
     @Override
-    public CompletableFuture<Acknowledge> setSubmissionParams(
-            ExecutionAttemptID executionAttemptID, long interval) {
-        return null;
-    }
-
-    @Override
     public CompletableFuture<Acknowledge> triggerCheckpoint(
             ExecutionAttemptID executionAttemptID,
             long checkpointID,

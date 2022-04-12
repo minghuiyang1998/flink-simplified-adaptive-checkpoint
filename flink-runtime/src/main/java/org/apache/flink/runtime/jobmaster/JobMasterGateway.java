@@ -22,6 +22,7 @@ import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.runtime.checkpoint.CheckpointCoordinatorGateway;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
@@ -89,6 +90,11 @@ public interface JobMasterGateway
      */
     CompletableFuture<Acknowledge> submitTaskManagerRunningState(
             final TaskManagerRunningState taskManagerRunningState);
+
+    /**
+     * @return checkpoint adapter metrics submission interval
+     */
+    CompletableFuture<Tuple2<Boolean, Long>> requestMetricsInterval();
 
     /**
      * Requests the next input split for the {@link ExecutionJobVertex}. The next input split is
