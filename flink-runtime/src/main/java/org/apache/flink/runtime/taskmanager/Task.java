@@ -303,6 +303,8 @@ public class Task
 
     /** If submit metrics data to jobMaster once after completing a checkpoint */
     private boolean isSubmitAfterCheckpoint = true;
+    /** If  broadcastSubmissionParams doesn't be called, value is false */
+    private boolean isAdapterEnable = false;
     /** Periodically submit data to jobMaster */
     private Timer timer = new Timer();
     /**
@@ -1317,6 +1319,7 @@ public class Task
      * @param interval Set the interval at which the checkpoint is reported.
      */
     public void triggerMetricsSubmission(long interval) {
+        isAdapterEnable = true;
         if (interval == -1) {
             isSubmitAfterCheckpoint = true;
         } else {
@@ -1435,7 +1438,7 @@ public class Task
     public void notifyCheckpointComplete(final long checkpointID) {
         final TaskInvokable invokable = this.invokable;
 
-        if (isSubmitAfterCheckpoint) {
+        if (isAdapterEnable && isSubmitAfterCheckpoint) {
             TaskIOMetricGroup taskIOMetricGroup =
                     metrics.getIOMetricGroup(); // include numRecordIn + busy
             taskManagerActions.submitTaskExecutorRunningStatus(
