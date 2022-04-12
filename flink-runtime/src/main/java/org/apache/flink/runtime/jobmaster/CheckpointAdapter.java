@@ -237,6 +237,10 @@ public class CheckpointAdapter {
     }
 
     private void updatePeriod(long newPeriod) {
+        // if  new Period exceed LONG.MAX_VALUE
+        if (newPeriod >= Long.MAX_VALUE || newPeriod < coordinator.getMinPauseBetweenCheckpoints()) {
+            return;
+        }
         // update when a checkpoint is completed
         coordinator.restartCheckpointScheduler(newPeriod);
         baseInterval = newPeriod;

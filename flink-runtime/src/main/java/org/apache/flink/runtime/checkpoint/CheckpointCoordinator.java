@@ -1748,9 +1748,6 @@ public class CheckpointCoordinator {
             if (shutdown) {
                 throw new IllegalArgumentException("Checkpoint coordinator is shut down");
             }
-            Preconditions.checkState(
-                    isPeriodicCheckpointingConfigured(),
-                    "Can not start checkpoint scheduler, if no periodic checkpointing is configured");
 
             // make sure all prior timers are cancelled
             stopCheckpointScheduler();
@@ -1820,6 +1817,10 @@ public class CheckpointCoordinator {
 
     private long getRandomInitDelay() {
         return ThreadLocalRandom.current().nextLong(minPauseBetweenCheckpoints, baseInterval + 1L);
+    }
+
+    public long getMinPauseBetweenCheckpoints() {
+        return minPauseBetweenCheckpoints;
     }
 
     private ScheduledFuture<?> scheduleTriggerWithDelay(long initDelay) {

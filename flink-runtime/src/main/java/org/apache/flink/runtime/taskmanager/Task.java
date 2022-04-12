@@ -1464,6 +1464,7 @@ public class Task
             } catch (Throwable t) {
                 if (getExecutionState() == ExecutionState.RUNNING) {
                     // fail task if checkpoint confirmation failed.
+                    LOG.info(executionId + " request for adapter info!");
                     failExternally(new RuntimeException("Error while confirming checkpoint", t));
                 }
             }
