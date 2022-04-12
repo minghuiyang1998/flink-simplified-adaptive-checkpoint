@@ -75,9 +75,10 @@ public class StateMachineExample {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.enableCheckpointing(3000L);
         env.enableCheckpointAdapter(10000L);
-        env.setCheckpointAdapterMetricInterval(1000L);
-        env.setCheckpointAdapterAllowRange(0.4);
-        env.setCheckpointAdapterChangeInterval(1000L);
+        env.setCheckpointAdapterMetricInterval(5000L);
+        env.setCheckpointAdapterAllowRange(0.8);
+        env.setCheckpointAdapterChangeInterval(10L);
+        env.setCheckpointAdapterDebounceMode(true);
 
         final String stateBackend = params.get("backend", "memory");
         if ("hashmap".equals(stateBackend)) {
