@@ -30,14 +30,13 @@ public class CheckpointAdapter {
     final class Consumer implements Runnable {
         @Override
         public void run() {
-            while(isAdapterEnable) {
-                if(queue.size() > 0) {
+            while (isAdapterEnable) {
+                if (queue.size() > 0) {
                     try {
                         long p = queue.take() * 1000; // transfer to ms
                         long variation = (p - baseInterval) / baseInterval;
                         if (variation > diff) {
-                            final String message = "Current Checkpoint Interval: "
-                                            + baseInterval;
+                            final String message = "Current Checkpoint Interval: " + baseInterval;
                             log.info(message);
 
                             updatePeriod(p);
@@ -67,8 +66,8 @@ public class CheckpointAdapter {
         this.diff = 0.3;
         this.queue = new LinkedBlockingQueue<>();
 
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 10, 60,
-                TimeUnit.SECONDS, new ArrayBlockingQueue<>(20));
+        ThreadPoolExecutor executor =
+                new ThreadPoolExecutor(3, 10, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(20));
         Consumer consumer = new Consumer();
         CompletableFuture.runAsync(consumer, executor).thenRunAsync(executor::shutdown);
     }
@@ -88,12 +87,7 @@ public class CheckpointAdapter {
         double inputRate = taskManagerRunningState.getNumRecordsInRate();
         long checkpointID = taskManagerRunningState.getCheckpointID();
         final String message =
-                "ideal: "
-                        + ideal
-                        + " inputRate: "
-                        + inputRate
-                        + " checkpointID: "
-                        + checkpointID;
+                "ideal: " + ideal + " inputRate: " + inputRate + " checkpointID: " + checkpointID;
         log.info(message);
 
         // dealt with initial NaN

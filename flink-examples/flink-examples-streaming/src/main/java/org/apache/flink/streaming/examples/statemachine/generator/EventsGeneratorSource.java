@@ -50,10 +50,9 @@ public class EventsGeneratorSource extends RichParallelSourceFunction<Event> {
         final int range = Integer.MAX_VALUE / getRuntimeContext().getNumberOfParallelSubtasks();
         final int min = range * getRuntimeContext().getIndexOfThisSubtask();
         final int max = min + range;
-
         while (running) {
+            System.out.println("new data generated");
             sourceContext.collect(generator.next(min, max));
-
             if (delayPerRecordMillis > 0) {
                 Thread.sleep(delayPerRecordMillis);
             }

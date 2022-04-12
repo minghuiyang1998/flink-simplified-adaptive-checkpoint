@@ -336,7 +336,8 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
         // get Checkpoint from schedulerNG
         CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
         JobCheckpointingSettings snapshotSettings = jobGraph.getCheckpointingSettings();
-        CheckpointCoordinatorConfiguration chkConfig = snapshotSettings.getCheckpointCoordinatorConfiguration();
+        CheckpointCoordinatorConfiguration chkConfig =
+                snapshotSettings.getCheckpointCoordinatorConfiguration();
         // get Adapter config: from jobGraph
         JobCheckpointAdapterConfiguration ckpAdapterConfiguration =
                 this.jobGraph.getCkpAdapterConfiguration();

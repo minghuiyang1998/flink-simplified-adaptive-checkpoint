@@ -111,14 +111,18 @@ public class StateMachineExample {
                             source, WatermarkStrategy.noWatermarks(), "StateMachineExampleSource");
         } else {
             double errorRate = params.getDouble("error-rate", 0.0);
-            int sleep = params.getInt("sleep", 1);
+
+            // adjust input rate here
+            int sleep = params.getInt("sleep", 1000);
 
             System.out.printf(
                     "Using standalone source with error rate %f and sleep delay %s millis\n",
                     errorRate, sleep);
             System.out.println();
 
-            events = env.addSource(new EventsGeneratorSource(errorRate, sleep));
+            EventsGeneratorSource source = new EventsGeneratorSource(errorRate, sleep);
+            System.out.println("source: " + source);
+            events = env.addSource(source);
         }
 
         // ---- main program ----
