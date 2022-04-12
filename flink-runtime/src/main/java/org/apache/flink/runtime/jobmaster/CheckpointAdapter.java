@@ -103,19 +103,21 @@ public class CheckpointAdapter {
 
     final class ConsumerDebounce implements Runnable {
         private long minPeriod = Long.MAX_VALUE;
-        private final Timer timer = new Timer();
+        private Timer timer = new Timer();
 
         @Override
         public void run() {
             while (isAdapterEnable) {
                 if (queue.size() > 0) {
+                    // Since it is difficult to maintain a single number all the time, this allowRange ensures that the timer will not be cancelled as long as it varies within a certain range
                     try {
                         long p = queue.take() * 1000; // transfer to ms
                         if (isOverAllowRange(p)) {
                             log.info("over allowRange, store minPeriod");
                             minPeriod = Math.min(p, minPeriod);
                             timer.cancel();
-                            log.info("start timer");
+                            timer = new Timer();
+                            log.info("start timer, change interval: " + changeInterval);
                             timer.schedule(
                                     new TimerTask() {
                                         @Override
@@ -217,6 +219,7 @@ public class CheckpointAdapter {
 
         double maxData = (double) (recoveryTime / 1000) * ideal; // ideal: records per second
         long newPeriod = (long) (maxData / inputRate); // (records / million seconds)
+        log.info("New Period: " + newPeriod);
 
         // Get rid of extreme data
         if (newPeriod == 0 || newPeriod == Long.MAX_VALUE) {
