@@ -212,6 +212,8 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
 
     private HeartbeatManager<Void, Void> resourceManagerHeartbeatManager;
 
+    private boolean isCheckpointAdapterEnable = false;
+
     // ------------------------------------------------------------------------
 
     public JobMaster(
@@ -336,9 +338,8 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
         // if checkpoint is not enable or not a periodic checkpoint, adapter will not be initiated
         CheckpointCoordinator checkpointCoordinator = this.schedulerNG.getCheckpointCoordinator();
         boolean isAdapterEnable = this.jobGraph.getCkpAdapterConfiguration().isAdapterEnable();
-        if (checkpointCoordinator != null
-                && checkpointCoordinator.isPeriodicCheckpointingConfigured()
-                && isAdapterEnable) {
+        this.isCheckpointAdapterEnable = checkpointCoordinator.isPeriodicCheckpointingConfigured() && isAdapterEnable;
+        if (checkpointCoordinator != null && isCheckpointAdapterEnable) {
             // get Checkpoint from schedulerNG
             JobCheckpointingSettings snapshotSettings = jobGraph.getCheckpointingSettings();
             CheckpointCoordinatorConfiguration chkConfig =
@@ -920,7 +921,8 @@ public class JobMaster extends PermanentlyFencedRpcEndpoint<JobMasterId>
                 getFencingToken());
 
         startScheduling();
-        if (this.jobGraph.getCkpAdapterConfiguration().isAdapterEnable()) {
+        // periodic checkpoint + recovery time > 0
+        if (isCheckpointAdapterEnable) {
             broadcastSubmissionParams();
         }
     }
