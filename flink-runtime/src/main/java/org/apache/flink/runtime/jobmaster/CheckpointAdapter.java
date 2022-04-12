@@ -178,14 +178,14 @@ public class CheckpointAdapter {
                     log.info("set up a <Debounce> consumer");
                     consumer = new ConsumerDebounce();
                 } else {
-                    log.info("set up a <RangePeriod> consumer");
+                    log.info("set up a <Range & Period> consumer");
                     consumer = new ConsumerRangePeriod();
                 }
             } else if (withPeriod) {
                 log.info("set up a <Period> consumer");
                 consumer = new ConsumerPeriod();
             } else {
-                log.info("set up a <Period> consumer");
+                log.info("set up a <Range> consumer");
                 consumer = new ConsumerRange();
             }
             CompletableFuture.runAsync(consumer, executor).thenRunAsync(executor::shutdown);
