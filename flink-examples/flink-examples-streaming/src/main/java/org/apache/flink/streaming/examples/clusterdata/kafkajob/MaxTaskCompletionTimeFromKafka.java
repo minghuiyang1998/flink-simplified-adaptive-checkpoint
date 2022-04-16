@@ -17,8 +17,11 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.util.Collector;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 
 /**
  * Other ideas:
@@ -97,10 +100,30 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
     private static final class MaxDurationPerPriority implements FlatMapFunction<Tuple2<Integer, Long>, Tuple2<Integer, Long>> {
 
         Map<Integer, Long> currentMaxMap = new HashMap<>();
+        LinkedList<Long> currentMaxList = new LinkedList<>();
+        int maxListLength = 1000;
+        long tempMax = 0;
+        Random r = new Random();
+
+        private Long findMax(List<Long> l){
+            Long max = l.get(0);
+            for (Long aLong : l) {
+                if(aLong > max){
+                    max = aLong;
+                }
+            }
+            return max;
+        }
 
         @Override
         public void flatMap(Tuple2<Integer, Long> t, Collector<Tuple2<Integer, Long>> out) throws Exception {
-
+            long generatedLong = r.nextLong();
+            currentMaxList.add(t.f1 + generatedLong);
+            if (currentMaxList.size() > maxListLength){
+                currentMaxList.pop();
+            }
+            tempMax = findMax(currentMaxList);
+            //System.out.println(tempMax);
             if (currentMaxMap.containsKey(t.f0)) {
                 // find the maximum
                 long currentMax = currentMaxMap.get(t.f0);
