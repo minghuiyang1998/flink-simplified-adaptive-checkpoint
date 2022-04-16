@@ -1,3 +1,8 @@
+Datasource -> filter -> kafkasink -> kafka -> consumer using flink
+
+Change the input rate in org.apache.flink.streaming.examples.clusterdata.sources.TaskEventSource
+
+
 # Apache Flink
 
 Apache Flink is an open source stream processing framework with powerful stream- and batch-processing capabilities.
