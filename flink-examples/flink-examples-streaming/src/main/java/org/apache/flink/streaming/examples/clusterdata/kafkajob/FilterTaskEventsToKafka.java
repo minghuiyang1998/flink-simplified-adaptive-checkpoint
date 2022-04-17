@@ -1,26 +1,23 @@
 package org.apache.flink.streaming.examples.clusterdata.kafkajob;
 
-import org.apache.flink.streaming.examples.clusterdata.datatypes.EventType;
-import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
-import org.apache.flink.streaming.examples.clusterdata.sources.TaskEventSource;
-import org.apache.flink.streaming.examples.clusterdata.utils.AppBase;
-import org.apache.flink.streaming.examples.clusterdata.utils.TaskEventSchema;
 import org.apache.flink.api.common.functions.FilterFunction;
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.examples.clusterdata.datatypes.EventType;
+import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
+import org.apache.flink.streaming.examples.clusterdata.sources.TaskEventSource;
+import org.apache.flink.streaming.examples.clusterdata.utils.AppBase;
+import org.apache.flink.streaming.examples.clusterdata.utils.TaskEventSchema;
 
 import java.util.Properties;
 
 /**
  * Write SUBMIT(0) and FINISH(4) TaskEvents to a Kafka topic.
- * <p>
- * Parameters:
- * --input path-to-input-file
+ *
+ * <p>Parameters: --input path-to-input-file
  */
 public class FilterTaskEventsToKafka extends AppBase {
 
@@ -29,8 +26,8 @@ public class FilterTaskEventsToKafka extends AppBase {
 
     public static void main(String[] args) throws Exception {
 
-        //ParameterTool params = ParameterTool.fromArgs(args);
-        //String input = params.get("input", pathToTaskEventData);
+        // ParameterTool params = ParameterTool.fromArgs(args);
+        // String input = params.get("input", pathToTaskEventData);
         String input = pathToTaskEventData;
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "localhost:9092");
@@ -43,25 +40,29 @@ public class FilterTaskEventsToKafka extends AppBase {
         env.setParallelism(3);
 
         // start the data generator
-        DataStream<TaskEvent> taskEvents = env
-                .addSource(taskSourceOrTest(new TaskEventSource(input, servingSpeedFactor)))
-                .setParallelism(1);
+        DataStream<TaskEvent> taskEvents =
+                env.addSource(taskSourceOrTest(new TaskEventSource(input, servingSpeedFactor)))
+                        .setParallelism(1);
 
-        DataStream<TaskEvent> filteredEvents = taskEvents
-                // filter out task events that do not correspond to SUBMIT or FINISH transitions
-                .filter(new TaskFilter());
+        DataStream<TaskEvent> filteredEvents =
+                taskEvents
+                        // filter out task events that do not correspond to SUBMIT or FINISH
+                        // transitions
+                        .filter(new TaskFilter());
 
         printOrTest(filteredEvents);
 
         // write the filtered data to a Kafka sink
-        KafkaSink<TaskEvent> sink = KafkaSink.<TaskEvent>builder()
-                .setBootstrapServers("localhost:9092")
-                .setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
-                .setRecordSerializer(KafkaRecordSerializationSchema.builder()
-                        .setTopic("wiki-edits")
-                        .setValueSerializationSchema(new TaskEventSchema())
-                        .build())
-                .build();
+        KafkaSink<TaskEvent> sink =
+                KafkaSink.<TaskEvent>builder()
+                        .setBootstrapServers("localhost:9092")
+                        .setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+                        .setRecordSerializer(
+                                KafkaRecordSerializationSchema.builder()
+                                        .setTopic("wiki-edits")
+                                        .setValueSerializationSchema(new TaskEventSchema())
+                                        .build())
+                        .build();
 
         filteredEvents.sinkTo(sink);
         // run the cleansing pipeline
@@ -72,8 +73,8 @@ public class FilterTaskEventsToKafka extends AppBase {
 
         @Override
         public boolean filter(TaskEvent taskEvent) throws Exception {
-            return taskEvent.eventType.equals(EventType.SUBMIT) ||
-                    taskEvent.eventType.equals(EventType.FINISH);
+            return taskEvent.eventType.equals(EventType.SUBMIT)
+                    || taskEvent.eventType.equals(EventType.FINISH);
         }
     }
 }

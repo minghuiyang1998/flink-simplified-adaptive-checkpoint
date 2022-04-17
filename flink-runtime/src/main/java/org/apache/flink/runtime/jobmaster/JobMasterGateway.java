@@ -91,9 +91,7 @@ public interface JobMasterGateway
     CompletableFuture<Acknowledge> submitTaskManagerRunningState(
             final TaskManagerRunningState taskManagerRunningState);
 
-    /**
-     * @return checkpoint adapter metrics submission interval
-     */
+    /** @return checkpoint adapter metrics submission interval */
     CompletableFuture<Tuple2<Boolean, Long>> requestMetricsInterval();
 
     /**

@@ -1842,31 +1842,30 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
     }
 
     private void requestCheckpointAdapterConfig(
-            final JobMasterGateway jobMasterGateway,
-            ExecutionAttemptID executionAttemptID
-    ) {
+            final JobMasterGateway jobMasterGateway, ExecutionAttemptID executionAttemptID) {
         CompletableFuture<Tuple2<Boolean, Long>> configFuture =
                 jobMasterGateway.requestMetricsInterval();
 
-        configFuture.thenAccept(config -> {
-            boolean isAdatperEnable = config.f0;
-            long interval = config.f1;
-            log.debug(
-                    "set checkpoint adapter submitting parameters {} for {}.",
-                    executionAttemptID,
-                    interval);
-            final Task task = taskSlotTable.getTask(executionAttemptID);
-            if (task != null) {
-                task.triggerMetricsSubmission(isAdatperEnable, interval);
-            } else {
-                final String message =
-                        "TaskManager received a adapter setting request for unknown task "
-                                + executionAttemptID
-                                + '.';
+        configFuture.thenAccept(
+                config -> {
+                    boolean isAdatperEnable = config.f0;
+                    long interval = config.f1;
+                    log.debug(
+                            "set checkpoint adapter submitting parameters {} for {}.",
+                            executionAttemptID,
+                            interval);
+                    final Task task = taskSlotTable.getTask(executionAttemptID);
+                    if (task != null) {
+                        task.triggerMetricsSubmission(isAdatperEnable, interval);
+                    } else {
+                        final String message =
+                                "TaskManager received a adapter setting request for unknown task "
+                                        + executionAttemptID
+                                        + '.';
 
-                log.debug(message);
-            }
-        });
+                        log.debug(message);
+                    }
+                });
 
         configFuture.whenCompleteAsync(
                 (ack, throwable) -> {
@@ -1874,7 +1873,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
                         log.error(throwable.getMessage());
                     }
                 },
-        getMainThreadExecutor());
+                getMainThreadExecutor());
     }
 
     private void submitTaskManagerRunningState(

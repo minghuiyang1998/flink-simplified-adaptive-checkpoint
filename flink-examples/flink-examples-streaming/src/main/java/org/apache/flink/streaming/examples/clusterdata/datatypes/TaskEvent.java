@@ -4,25 +4,33 @@ import java.io.Serializable;
 
 /**
  * A TaskEvent describes a task event in a task's lifecycle. It consists of the following fields:
- * <p>
- * - the jobId of this task's parent job
- * - the taskIndex inside the job
- * - the timestamp of when the event happened
- * - the machineId where this task was scheduled on (could be null)
- * - the eventType, which corresponds to an event transition code
- * - the userName of the job submitter
- * - the schedulingClass that roughly represents how latency-sensitive the task is
- * - a priority where a larger value indicates higher importance
- * - maxCPU which is the maximum amount of CPU the taskj is permitted to use
- * - maxRAM which is the maximum amount of memory this task is allowed to use
- * - maxDisk
- * - a differentMachine field which, if true, indicates that the task must be scheduled on a different machine than any other currently task of the same job
- * - a missingInfo field, indicating whether the record is a synthesized replacement
+ *
+ * <p>- the jobId of this task's parent job - the taskIndex inside the job - the timestamp of when
+ * the event happened - the machineId where this task was scheduled on (could be null) - the
+ * eventType, which corresponds to an event transition code - the userName of the job submitter -
+ * the schedulingClass that roughly represents how latency-sensitive the task is - a priority where
+ * a larger value indicates higher importance - maxCPU which is the maximum amount of CPU the taskj
+ * is permitted to use - maxRAM which is the maximum amount of memory this task is allowed to use -
+ * maxDisk - a differentMachine field which, if true, indicates that the task must be scheduled on a
+ * different machine than any other currently task of the same job - a missingInfo field, indicating
+ * whether the record is a synthesized replacement
  */
 public class TaskEvent implements Comparable<TaskEvent>, Serializable {
 
-    public TaskEvent(long jobId, int taskIndex, long timestamp, long machineId, EventType eventType, String userName,
-                     int schedulingClass, int priority, double maxCPU, double maxRAM, double maxDisk, boolean differentMachine, String missingInfo) {
+    public TaskEvent(
+            long jobId,
+            int taskIndex,
+            long timestamp,
+            long machineId,
+            EventType eventType,
+            String userName,
+            int schedulingClass,
+            int priority,
+            double maxCPU,
+            double maxRAM,
+            double maxDisk,
+            boolean differentMachine,
+            String missingInfo) {
 
         this.jobId = jobId;
         this.taskIndex = taskIndex;
@@ -53,8 +61,7 @@ public class TaskEvent implements Comparable<TaskEvent>, Serializable {
     public boolean differentMachine = false;
     public String missingInfo;
 
-    public TaskEvent() {
-    }
+    public TaskEvent() {}
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -79,7 +86,8 @@ public class TaskEvent implements Comparable<TaskEvent>, Serializable {
     public static TaskEvent fromString(String line) {
         String[] tokens = line.split(",");
         if (tokens.length < 9) {
-            throw new RuntimeException("Invalid task event record: " + line + ", tokens: " + tokens.length);
+            throw new RuntimeException(
+                    "Invalid task event record: " + line + ", tokens: " + tokens.length);
         }
 
         TaskEvent tEvent = new TaskEvent();
@@ -108,7 +116,6 @@ public class TaskEvent implements Comparable<TaskEvent>, Serializable {
             throw new RuntimeException("Invalid task event record: " + line, nfe);
         }
         return tEvent;
-
     }
 
     @Override
@@ -128,8 +135,8 @@ public class TaskEvent implements Comparable<TaskEvent>, Serializable {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof TaskEvent &&
-                this.jobId == ((TaskEvent) other).jobId
+        return other instanceof TaskEvent
+                && this.jobId == ((TaskEvent) other).jobId
                 && this.taskIndex == ((TaskEvent) other).taskIndex;
     }
 }

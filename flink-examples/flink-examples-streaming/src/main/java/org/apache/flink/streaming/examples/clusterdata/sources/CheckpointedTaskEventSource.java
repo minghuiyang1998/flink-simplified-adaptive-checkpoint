@@ -1,34 +1,40 @@
 package org.apache.flink.streaming.examples.clusterdata.sources;
 
-import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
+import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 /**
- * This SourceFunction generates a data stream of TaskEvent records which are
- * read from a gzipped input file. Each record has a time stamp and the input file must be
- * ordered by this time stamp.
+ * This SourceFunction generates a data stream of TaskEvent records which are read from a gzipped
+ * input file. Each record has a time stamp and the input file must be ordered by this time stamp.
  *
- * In order to simulate a realistic stream source, the SourceFunction serves events proportional to
- * their timestamps. In addition, the serving of events can be delayed by a bounded random delay
+ * <p>In order to simulate a realistic stream source, the SourceFunction serves events proportional
+ * to their timestamps. In addition, the serving of events can be delayed by a bounded random delay
  * which causes the events to be served slightly out-of-order of their timestamps.
  *
- * The serving speed of the SourceFunction can be adjusted by a serving speed factor.
- * A factor of 60.0 increases the logical serving time by a factor of 60, i.e., events of one
- * minute (60 seconds) are served in 1 second.
+ * <p>The serving speed of the SourceFunction can be adjusted by a serving speed factor. A factor of
+ * 60.0 increases the logical serving time by a factor of 60, i.e., events of one minute (60
+ * seconds) are served in 1 second.
  *
- * This SourceFunction is an EventSourceFunction and does continuously emit watermarks.
- * Hence it is able to operate in event time mode which is configured as follows:
+ * <p>This SourceFunction is an EventSourceFunction and does continuously emit watermarks. Hence it
+ * is able to operate in event time mode which is configured as follows:
  *
- *   StreamExecutionEnvironment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
- *
+ * <p>StreamExecutionEnvironment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
  */
-public class CheckpointedTaskEventSource implements SourceFunction<TaskEvent>, ListCheckpointed<Long> {
+public class CheckpointedTaskEventSource
+        implements SourceFunction<TaskEvent>, ListCheckpointed<Long> {
 
     private final String dataFilePath;
     private final int servingSpeed;
@@ -40,14 +46,14 @@ public class CheckpointedTaskEventSource implements SourceFunction<TaskEvent>, L
     // number of emitted events
     private long eventCnt = 0;
 
-
     /**
-     * Serves the TaskEvent records from the specified and ordered gzipped input file.
-     * Events are served out-of time stamp order with specified maximum random delay
-     * in a serving speed which is proportional to the specified serving speed factor.
+     * Serves the TaskEvent records from the specified and ordered gzipped input file. Events are
+     * served out-of time stamp order with specified maximum random delay in a serving speed which
+     * is proportional to the specified serving speed factor.
      *
      * @param dataFilePath The gzipped input file from which the TaskEvent records are read.
-     * @param servingSpeedFactor The serving speed factor by which the logical serving time is adjusted.
+     * @param servingSpeedFactor The serving speed factor by which the logical serving time is
+     *     adjusted.
      */
     public CheckpointedTaskEventSource(String dataFilePath, int servingSpeedFactor) {
         this.dataFilePath = dataFilePath;
@@ -105,7 +111,6 @@ public class CheckpointedTaskEventSource implements SourceFunction<TaskEvent>, L
         }
     }
 
-
     @Override
     public void cancel() {
         try {
@@ -115,7 +120,7 @@ public class CheckpointedTaskEventSource implements SourceFunction<TaskEvent>, L
             if (this.gzipStream != null) {
                 this.gzipStream.close();
             }
-        } catch(IOException ioe) {
+        } catch (IOException ioe) {
             throw new RuntimeException("Could not cancel SourceFunction", ioe);
         } finally {
             this.reader = null;
@@ -130,7 +135,8 @@ public class CheckpointedTaskEventSource implements SourceFunction<TaskEvent>, L
 
     @Override
     public void restoreState(List<Long> state) throws Exception {
-        for (Long s : state)
+        for (Long s : state) {
             this.eventCnt = s;
+        }
     }
 }

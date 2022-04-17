@@ -19,7 +19,7 @@ public enum EventType {
     }
 
     private final int value;
-    private final static Map map = new HashMap();
+    private static final Map map = new HashMap();
 
     static {
         for (EventType e : EventType.values()) {

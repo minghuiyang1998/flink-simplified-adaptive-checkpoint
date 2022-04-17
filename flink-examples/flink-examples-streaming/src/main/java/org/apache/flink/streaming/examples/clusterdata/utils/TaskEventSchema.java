@@ -1,16 +1,18 @@
 package org.apache.flink.streaming.examples.clusterdata.utils;
 
-import org.apache.flink.streaming.examples.clusterdata.datatypes.EventType;
-import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.streaming.examples.clusterdata.datatypes.EventType;
+import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 
 /**
- * Implements a SerializationSchema and DeserializationSchema for TaskEvent for Kafka data sources and sinks.
+ * Implements a SerializationSchema and DeserializationSchema for TaskEvent for Kafka data sources
+ * and sinks.
  */
-public class TaskEventSchema implements DeserializationSchema<TaskEvent>, SerializationSchema<TaskEvent>  {
+public class TaskEventSchema
+        implements DeserializationSchema<TaskEvent>, SerializationSchema<TaskEvent> {
 
     @Override
     public byte[] serialize(TaskEvent element) {
@@ -20,12 +22,13 @@ public class TaskEventSchema implements DeserializationSchema<TaskEvent>, Serial
 
     @Override
     public TaskEvent deserialize(byte[] message) {
-        //TODO: we don't write them to Kafka in the same order we read them from the gzip file!
+        // TODO: we don't write them to Kafka in the same order we read them from the gzip file!
 
         String line = new String(message);
-        String [] tokens = line.split(",");
+        String[] tokens = line.split(",");
         if (tokens.length < 12) {
-            throw new RuntimeException("Invalid task event record: " + line + ", tokens: " + tokens.length);
+            throw new RuntimeException(
+                    "Invalid task event record: " + line + ", tokens: " + tokens.length);
         }
 
         TaskEvent tEvent = new TaskEvent();
@@ -37,8 +40,7 @@ public class TaskEventSchema implements DeserializationSchema<TaskEvent>, Serial
             tEvent.machineId = Long.parseLong(tokens[3]);
             if (tokens[4].equals("SUBMIT")) {
                 tEvent.eventType = EventType.SUBMIT;
-            }
-            else if (tokens[4].equals("FINISH")) {
+            } else if (tokens[4].equals("FINISH")) {
                 tEvent.eventType = EventType.FINISH;
             }
             tEvent.username = tokens[5];
@@ -52,7 +54,8 @@ public class TaskEventSchema implements DeserializationSchema<TaskEvent>, Serial
                 tEvent.missingInfo = tokens[12];
             }
         } catch (NumberFormatException nfe) {
-            throw new RuntimeException("Invalid message record while reading from Kafka: " + line, nfe);
+            throw new RuntimeException(
+                    "Invalid message record while reading from Kafka: " + line, nfe);
         }
         return tEvent;
     }

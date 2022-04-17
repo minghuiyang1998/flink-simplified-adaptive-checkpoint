@@ -1,9 +1,9 @@
 package org.apache.flink.streaming.examples.clusterdata.utils;
 
-import org.apache.flink.streaming.examples.clusterdata.datatypes.JobEvent;
-import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.examples.clusterdata.datatypes.JobEvent;
+import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 
 public class AppBase {
     public static SourceFunction<JobEvent> jobEvents = null;
@@ -12,9 +12,8 @@ public class AppBase {
     public static SinkFunction out = null;
     public static int parallelism = 4;
 
-    public final static String pathToJobEventData = "/home/junchenl/assignment-1/data/job_events";
-    public final static String pathToTaskEventData = "/home/junchenl/assignment-1/data/task_events";
-
+    public static final String pathToJobEventData = "/home/junchenl/assignment-1/data/job_events";
+    public static final String pathToTaskEventData = "/home/junchenl/assignment-1/data/task_events";
 
     public static SourceFunction<JobEvent> jobSourceOrTest(SourceFunction<JobEvent> source) {
         if (jobEvents == null) {

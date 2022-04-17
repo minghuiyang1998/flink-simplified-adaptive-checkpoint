@@ -109,7 +109,9 @@ public class CheckpointAdapter {
         public void run() {
             while (isAdapterEnable) {
                 if (queue.size() > 0) {
-                    // Since it is difficult to maintain a single number all the time, this allowRange ensures that the timer will not be cancelled as long as it varies within a certain range
+                    // Since it is difficult to maintain a single number all the time, this
+                    // allowRange ensures that the timer will not be cancelled as long as it varies
+                    // within a certain range
                     try {
                         long p = queue.take() * 1000; // transfer to ms
                         if (isOverAllowRange(p)) {
@@ -241,7 +243,8 @@ public class CheckpointAdapter {
 
     private void updatePeriod(long newPeriod) {
         // if  new Period exceed LONG.MAX_VALUE
-        if (newPeriod >= Long.MAX_VALUE || newPeriod < coordinator.getMinPauseBetweenCheckpoints()) {
+        if (newPeriod >= Long.MAX_VALUE
+                || newPeriod < coordinator.getMinPauseBetweenCheckpoints()) {
             return;
         }
         // update when a checkpoint is completed

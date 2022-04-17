@@ -303,7 +303,7 @@ public class Task
 
     /** If submit metrics data to jobMaster once after completing a checkpoint */
     private boolean isSubmitAfterCheckpoint = true;
-    /** If  broadcastSubmissionParams doesn't be called, value is false */
+    /** If broadcastSubmissionParams doesn't be called, value is false */
     private boolean isAdapterEnable = false;
     /** Periodically submit data to jobMaster */
     private Timer timer = new Timer();
