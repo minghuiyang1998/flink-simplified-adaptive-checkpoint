@@ -1,7 +1,5 @@
 package org.apache.flink.streaming.examples.clusterdata.kafkajob;
 
-import com.esotericsoftware.minlog.Log;
-
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.MapState;
@@ -26,10 +24,9 @@ import org.apache.flink.streaming.examples.clusterdata.utils.AppBase;
 import org.apache.flink.streaming.examples.clusterdata.utils.TaskEventSchema;
 import org.apache.flink.util.Collector;
 
+import com.esotericsoftware.minlog.Log;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-
-import java.util.Properties;
 
 import static org.apache.flink.streaming.api.CheckpointingMode.EXACTLY_ONCE;
 
@@ -39,7 +36,6 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
     private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
     private static final String TASKS_GROUP = "taskGroup";
     public static final String TASKS_TOPIC = "wiki-edits";
-
 
     public static void main(String[] args) throws Exception {
         // set up streaming execution environment
@@ -59,14 +55,16 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                 KafkaRecordDeserializationSchema.valueOnly(new TaskEventSchema()))
                         // TODO: adjust speed by control poll records
                         .setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "5")
-                         .setProperty(KafkaSourceOptions.REGISTER_KAFKA_CONSUMER_METRICS.key(), "true")
+                        .setProperty(
+                                KafkaSourceOptions.REGISTER_KAFKA_CONSUMER_METRICS.key(), "true")
                         // recover from checkpoint
                         .setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
                         .setProperty(KafkaSourceOptions.COMMIT_OFFSETS_ON_CHECKPOINT.key(), "true")
                         // If each partition has a committed offset, the offset will be consumed
                         // from the committed offset.
                         // Start consuming from scratch when there is no submitted offset
-                        .setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST))
+                        .setStartingOffsets(
+                                OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST))
                         .build();
         DataStream<TaskEvent> events =
                 env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source");
