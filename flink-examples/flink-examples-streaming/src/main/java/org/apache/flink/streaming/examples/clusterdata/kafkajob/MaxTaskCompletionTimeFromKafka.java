@@ -1,5 +1,7 @@
 package org.apache.flink.streaming.examples.clusterdata.kafkajob;
 
+import com.esotericsoftware.minlog.Log;
+
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.MapState;
@@ -25,13 +27,19 @@ import org.apache.flink.streaming.examples.clusterdata.utils.TaskEventSchema;
 import org.apache.flink.util.Collector;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+
+import java.util.Properties;
 
 import static org.apache.flink.streaming.api.CheckpointingMode.EXACTLY_ONCE;
 
 /** Other ideas: - average task runtime per priority - a histogram of task scheduling latency. */
 public class MaxTaskCompletionTimeFromKafka extends AppBase {
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
+    private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
     private static final String TASKS_GROUP = "taskGroup";
+    public static final String TASKS_TOPIC = "wiki-edits";
+
 
     public static void main(String[] args) throws Exception {
         // set up streaming execution environment
@@ -39,47 +47,51 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         env.setParallelism(2);
 
         // set up checkpointing
-        env.enableCheckpointing(5000L, EXACTLY_ONCE);
+        env.enableCheckpointing(10000L, EXACTLY_ONCE);
         // TODO: statebackend here
 
         KafkaSource<TaskEvent> source =
                 KafkaSource.<TaskEvent>builder()
-                        .setBootstrapServers(LOCAL_KAFKA_BROKER)
+                        .setBootstrapServers(REMOTE_KAFKA_BROKER)
                         .setGroupId(TASKS_GROUP)
-                        .setTopics("wiki-edits")
+                        .setTopics(TASKS_TOPIC)
                         .setDeserializer(
                                 KafkaRecordDeserializationSchema.valueOnly(new TaskEventSchema()))
                         // TODO: adjust speed by control poll records
                         .setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "5")
-                        .setProperty(KafkaSourceOptions.REGISTER_KAFKA_CONSUMER_METRICS.key(), "true")
+                         .setProperty(KafkaSourceOptions.REGISTER_KAFKA_CONSUMER_METRICS.key(), "true")
                         // recover from checkpoint
+                        .setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
                         .setProperty(KafkaSourceOptions.COMMIT_OFFSETS_ON_CHECKPOINT.key(), "true")
-                        // If each partition has a committed offset, the offset will be consumed from the committed offset.
+                        // If each partition has a committed offset, the offset will be consumed
+                        // from the committed offset.
                         // Start consuming from scratch when there is no submitted offset
-                        .setStartingOffsets(OffsetsInitializer.earliest())
+                        .setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST))
                         .build();
-        DataStream<TaskEvent> events = env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source");
+        DataStream<TaskEvent> events =
+                env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source");
 
         // get SUBMIT and FINISH events in one place "jobId", "taskIndex", out put task duration
         DataStream<Tuple3<Long, Integer, Long>> taskDurations =
                 events.keyBy(
-                        new KeySelector<TaskEvent, Tuple2<Integer, Long>>() {
-                            @Override
-                            public Tuple2<Integer, Long> getKey(TaskEvent taskEvent)
-                                    throws Exception {
-                                return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
-                            }
-                        })
-                .flatMap(new CalculateTaskDuration());
+                                new KeySelector<TaskEvent, Tuple2<Integer, Long>>() {
+                                    @Override
+                                    public Tuple2<Integer, Long> getKey(TaskEvent taskEvent)
+                                            throws Exception {
+                                        return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
+                                    }
+                                })
+                        .flatMap(new CalculateTaskDuration());
 
         DataStream<Tuple2<Long, Long>> maxDurationsPerJob =
                 taskDurations
                         // key by priority
                         .keyBy(
-                                new KeySelector<Tuple3<Long, Integer, Long>, Tuple2<Long, Integer>>() {
+                                new KeySelector<
+                                        Tuple3<Long, Integer, Long>, Tuple2<Long, Integer>>() {
                                     @Override
-                                    public Tuple2<Long, Integer> getKey(Tuple3<Long, Integer, Long> task)
-                                            throws Exception {
+                                    public Tuple2<Long, Integer> getKey(
+                                            Tuple3<Long, Integer, Long> task) throws Exception {
                                         return Tuple2.of(task.f0, task.f1);
                                     }
                                 })
@@ -98,13 +110,13 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
         @Override
         public void open(Configuration parameters) throws Exception {
-            minDurationPerJob = getRuntimeContext().getMapState(new MapStateDescriptor<>(
-                    "max-map",
-                    Long.class,
-                    Long.class));
-            countCompletedTasks = getRuntimeContext().getState(new ValueStateDescriptor<>(
-                    "count-value",
-                    Integer.class));
+            minDurationPerJob =
+                    getRuntimeContext()
+                            .getMapState(
+                                    new MapStateDescriptor<>("max-map", Long.class, Long.class));
+            countCompletedTasks =
+                    getRuntimeContext()
+                            .getState(new ValueStateDescriptor<>("count-value", Integer.class));
         }
 
         @Override
@@ -113,20 +125,20 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
             // <job, maxTask>
             Integer count = countCompletedTasks.value();
             if (count == null) {
-                countCompletedTasks.update( 1);
-            } else  {
+                countCompletedTasks.update(1);
+            } else {
                 countCompletedTasks.update(count + 1);
             }
-            Long curr_jobId = task.f0;
+            Long currJobId = task.f0;
             Long duration = task.f2;
-            Long minInJob = minDurationPerJob.get(curr_jobId);
-            if (minInJob == null)  {
+            Long minInJob = minDurationPerJob.get(currJobId);
+            if (minInJob == null) {
                 minInJob = duration;
             } else {
                 minInJob = Math.min(minInJob, duration);
             }
-            minDurationPerJob.put(curr_jobId, minInJob);
-            out.collect(new Tuple2<>(curr_jobId, minInJob));
+            minDurationPerJob.put(currJobId, minInJob);
+            out.collect(new Tuple2<>(currJobId, minInJob));
         }
     }
 
@@ -137,32 +149,39 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         // keep all values in state
         private MapState<Tuple2<Long, Integer>, TaskEvent> events;
         private ValueState<Integer> countMessages;
+
         @Override
         public void open(Configuration parameters) throws Exception {
-            events = getRuntimeContext().getMapState(new MapStateDescriptor<>("duration-map",
-                    TypeInformation.of(new TypeHint<Tuple2<Long, Integer>>() {
-                    }), TypeInformation.of(
-                    new TypeHint<TaskEvent>() {
-                        @Override
-                        public TypeInformation<TaskEvent> getTypeInfo() {
-                            return super.getTypeInfo();
-                        }
-                    })));
-            countMessages = getRuntimeContext().getState(new ValueStateDescriptor<>(
-                    "msg-value",
-                    Integer.class));
+            events =
+                    getRuntimeContext()
+                            .getMapState(
+                                    new MapStateDescriptor<>(
+                                            "duration-map",
+                                            TypeInformation.of(
+                                                    new TypeHint<Tuple2<Long, Integer>>() {}),
+                                            TypeInformation.of(
+                                                    new TypeHint<TaskEvent>() {
+                                                        @Override
+                                                        public TypeInformation<TaskEvent>
+                                                                getTypeInfo() {
+                                                            return super.getTypeInfo();
+                                                        }
+                                                    })));
+            countMessages =
+                    getRuntimeContext()
+                            .getState(new ValueStateDescriptor<>("msg-value", Integer.class));
         }
 
         @Override
         public void flatMap(TaskEvent taskEvent, Collector<Tuple3<Long, Integer, Long>> out)
                 throws Exception {
             Tuple2<Long, Integer> taskKey = new Tuple2<>(taskEvent.jobId, taskEvent.taskIndex);
-
+            Log.info("jobID: " + taskEvent.jobId + " taskIndex: " + taskEvent.taskIndex);
             Integer count = countMessages.value();
             if (count == null) {
                 countMessages.update(1);
             } else {
-                countMessages.update( count + 1);
+                countMessages.update(count + 1);
             }
 
             // what's the event type?
@@ -193,10 +212,11 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                 // this is a FINISH event: compute duration and emit downstream
                 if (events.contains(taskKey)) {
                     long submitTime = events.get(taskKey).timestamp;
-                    out.collect(new Tuple3<>(
-                            taskEvent.jobId,
-                            taskEvent.taskIndex,
-                            taskEvent.timestamp - submitTime));
+                    out.collect(
+                            new Tuple3<>(
+                                    taskEvent.jobId,
+                                    taskEvent.taskIndex,
+                                    taskEvent.timestamp - submitTime));
                     // clean-up state
                     events.remove(taskKey);
                 } else {

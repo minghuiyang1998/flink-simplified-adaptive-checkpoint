@@ -6,7 +6,6 @@ import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.examples.clusterdata.datatypes.EventType;
 import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 import org.apache.flink.streaming.examples.clusterdata.sources.TaskEventSource;
 import org.apache.flink.streaming.examples.clusterdata.utils.AppBase;
@@ -22,7 +21,8 @@ import java.util.Properties;
 public class FilterTaskEventsToKafka extends AppBase {
 
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
-    public static final String FILTERED_TASKS_TOPIC = "filteredTasks";
+    private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
+    public static final String FILTERED_TASKS_TOPIC = "wiki-edits";
 
     public static void main(String[] args) throws Exception {
 
@@ -30,7 +30,7 @@ public class FilterTaskEventsToKafka extends AppBase {
         // String input = params.get("input", pathToTaskEventData);
         String input = PATH_TO_TASK_EVENT_DATA;
         Properties properties = new Properties();
-        properties.setProperty("bootstrap.servers", "localhost:9092");
+        properties.setProperty("bootstrap.servers", ":9092");
 
         final int servingSpeedFactor = 600; // events of 10 minutes are served in 1 second
 
@@ -55,11 +55,11 @@ public class FilterTaskEventsToKafka extends AppBase {
         // write the filtered data to a Kafka sink
         KafkaSink<TaskEvent> sink =
                 KafkaSink.<TaskEvent>builder()
-                        .setBootstrapServers("localhost:9092")
+                        .setBootstrapServers(REMOTE_KAFKA_BROKER)
                         .setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                         .setRecordSerializer(
                                 KafkaRecordSerializationSchema.builder()
-                                        .setTopic("wiki-edits")
+                                        .setTopic(FILTERED_TASKS_TOPIC)
                                         .setValueSerializationSchema(new TaskEventSchema())
                                         .build())
                         .build();
