@@ -13,35 +13,44 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.typeutils.GenericTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.KafkaSourceOptions;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
+import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+import org.apache.flink.streaming.api.operators.StreamSink;
 import org.apache.flink.streaming.examples.clusterdata.datatypes.EventType;
 import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 import org.apache.flink.streaming.examples.clusterdata.utils.AppBase;
 import org.apache.flink.streaming.examples.clusterdata.utils.TaskEventSchema;
+import org.apache.flink.streaming.runtime.streamrecord.LatencyMarker;
 import org.apache.flink.util.Collector;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-
-import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.flink.streaming.api.CheckpointingMode.EXACTLY_ONCE;
 
 /** Other ideas: - average task runtime per priority - a histogram of task scheduling latency. */
 public class MaxTaskCompletionTimeFromKafka extends AppBase {
+    private static final Logger logger = LoggerFactory.getLogger(MaxTaskCompletionTimeFromKafka.class);
+
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
     private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
     private static final String TASKS_GROUP = "taskGroup";
     public static final String TASKS_TOPIC = "wiki-edits";
-
+    public static final String CHECKPOINT_DIR = "file:///checkpoint";
 
     public static void main(String[] args) throws Exception {
+        GenericTypeInfo<Object> objectTypeInfo = new GenericTypeInfo<>(Object.class);
+
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(2);
@@ -49,6 +58,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         // set up checkpointing
         env.enableCheckpointing(10000L, EXACTLY_ONCE);
         // TODO: statebackend here
+        env.setStateBackend(new HashMapStateBackend());
+        env.getCheckpointConfig().setCheckpointStorage(CHECKPOINT_DIR);
 
         KafkaSource<TaskEvent> source =
                 KafkaSource.<TaskEvent>builder()
@@ -97,7 +108,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                 })
                         .flatMap(new TaskWithMinDurationPerJob());
 
-        printOrTest(maxDurationsPerJob);
+        maxDurationsPerJob.transform("Latency Sink", objectTypeInfo, new LatencySink<>(logger));
 
         env.execute();
     }
@@ -224,6 +235,25 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                     events.put(taskKey, taskEvent);
                 }
             }
+        }
+    }
+
+    private static class LatencySink<T> extends StreamSink<T> {
+        private final Logger logger;
+
+        public LatencySink(Logger logger) {
+            super(
+                    new SinkFunction<T>() {
+                        @Override
+                        public void invoke(Object value, Context ctx) {}
+                    });
+            this.logger = logger;
+        }
+
+        @Override
+        public void processLatencyMarker(LatencyMarker latencyMarker) throws Exception {
+            logger.info(
+                    "%{}%{}", "latency", System.currentTimeMillis() - latencyMarker.getMarkedTime());
         }
     }
 }
