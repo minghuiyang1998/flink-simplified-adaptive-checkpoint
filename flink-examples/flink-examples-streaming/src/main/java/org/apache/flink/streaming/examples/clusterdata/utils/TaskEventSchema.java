@@ -24,7 +24,6 @@ public class TaskEventSchema
     public TaskEvent deserialize(byte[] message) {
         // TODO: we don't write them to Kafka in the same order we read them from the gzip file!
 
-
         String line = new String(message);
         String[] tokens = line.split(",");
         if (tokens.length < 12) {
@@ -41,7 +40,7 @@ public class TaskEventSchema
             tEvent.machineId = Long.parseLong(tokens[3]);
             if (tokens[4].equals("SUBMIT")) {
                 tEvent.eventType = EventType.SUBMIT;
-            }else if (tokens[4].equals("SCHEDULE")) {
+            } else if (tokens[4].equals("SCHEDULE")) {
                 tEvent.eventType = EventType.SCHEDULE;
             } else if (tokens[4].equals("EVICT")) {
                 tEvent.eventType = EventType.EVICT;
