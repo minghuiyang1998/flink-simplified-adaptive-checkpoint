@@ -73,8 +73,9 @@ public class FilterTaskEventsToKafka extends AppBase {
 
         @Override
         public boolean filter(TaskEvent taskEvent) throws Exception {
-            return taskEvent.eventType.equals(EventType.SUBMIT)
-                    || taskEvent.eventType.equals(EventType.FINISH);
+            // return taskEvent.eventType.equals(EventType.SUBMIT)
+            //        || taskEvent.eventType.equals(EventType.FINISH);
+            return true;
         }
     }
 }
