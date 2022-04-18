@@ -92,30 +92,18 @@ public class TaskEventSource implements SourceFunction<TaskEvent> {
 
     @Override
     public void run(SourceFunction.SourceContext<TaskEvent> sourceContext) throws Exception {
-
         File directory = new File(dataFilePath);
         File[] files = directory.listFiles();
         Arrays.sort(files);
-        long t1 = System.currentTimeMillis();
-        while (true) {
-            long t2 = System.currentTimeMillis();
-            if (t2 - t1 > 0.05 * 60 * 60 * 1000) {
-                break;
-            } else {
-                for (File file : files) {
-
-                    FileInputStream fis = new FileInputStream(file);
-                    gzipStream = new GZIPInputStream(fis);
-                    reader = new BufferedReader(new InputStreamReader(gzipStream, "UTF-8"));
-
-                    generateUnorderedStream(sourceContext);
-
-                    this.reader.close();
-                    this.reader = null;
-                    this.gzipStream.close();
-                    this.gzipStream = null;
-                }
-            }
+        for (File file : files) {
+            FileInputStream fis = new FileInputStream(file);
+            gzipStream = new GZIPInputStream(fis);
+            reader = new BufferedReader(new InputStreamReader(gzipStream, "UTF-8"));
+            generateUnorderedStream(sourceContext);
+            this.reader.close();
+            this.reader = null;
+            this.gzipStream.close();
+            this.gzipStream = null;
         }
     }
 

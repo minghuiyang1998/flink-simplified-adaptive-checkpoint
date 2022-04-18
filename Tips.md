@@ -14,3 +14,5 @@ to style problem, find with -x and fix it! run 'mvn spotless:apply'
 JobMaster Gateway (run "mvn clean package" first, Otherwise, an error message is displayed 
 indicating that the "rpcService" cannot be established.)
 
+6. The best way to learn how to use the API is to look at Example instead of searching for documentation on the website
+
