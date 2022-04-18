@@ -171,7 +171,8 @@ public class TaskEventSource implements SourceFunction<TaskEvent> {
             long curNextDelayedEventTime = !emitSchedule.isEmpty() ? emitSchedule.peek().f0 : -1;
             long taskEventTime = (event != null) ? event.timestamp / 1000 : -1;
             while (event != null
-                    && ( // while there is an event AND
+                    && (
+                    // while there is an event AND
                     emitSchedule.isEmpty()
                             || // and no event in schedule OR
                             taskEventTime

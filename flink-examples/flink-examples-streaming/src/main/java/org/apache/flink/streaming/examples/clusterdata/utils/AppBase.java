@@ -13,8 +13,7 @@ public class AppBase {
     public static SinkFunction out = null;
     public static int parallelism = 4;
 
-    public static final String PATH_TO_TASK_EVENT_DATA =
-            "../data/task-events";
+    public static final String PATH_TO_TASK_EVENT_DATA = "../data/task-events";
 
     public static SourceFunction<JobEvent> jobSourceOrTest(SourceFunction<JobEvent> source) {
         if (jobEvents == null) {
