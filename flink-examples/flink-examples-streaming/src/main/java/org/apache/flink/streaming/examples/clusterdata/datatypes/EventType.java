@@ -3,6 +3,7 @@ package org.apache.flink.streaming.examples.clusterdata.datatypes;
 import java.util.HashMap;
 import java.util.Map;
 
+/** EventType. */
 public enum EventType {
     SUBMIT(0),
     SCHEDULE(1),

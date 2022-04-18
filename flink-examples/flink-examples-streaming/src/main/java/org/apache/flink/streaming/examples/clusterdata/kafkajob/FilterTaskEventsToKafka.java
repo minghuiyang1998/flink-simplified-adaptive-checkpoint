@@ -28,7 +28,7 @@ public class FilterTaskEventsToKafka extends AppBase {
 
         // ParameterTool params = ParameterTool.fromArgs(args);
         // String input = params.get("input", pathToTaskEventData);
-        String input = pathToTaskEventData;
+        String input = PATH_TO_TASK_EVENT_DATA;
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "localhost:9092");
 

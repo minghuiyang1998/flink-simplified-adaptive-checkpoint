@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 
-/** Other ideas: - average task runtime per priority - a histogram of task scheduling latency */
+/** Other ideas: - average task runtime per priority - a histogram of task scheduling latency. */
 public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
     private static final String LOCAL_ZOOKEEPER_HOST = "localhost:2181";
