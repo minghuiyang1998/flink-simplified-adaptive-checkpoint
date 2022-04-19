@@ -55,7 +55,7 @@ public class FilterTaskEventsToKafka extends AppBase {
         // write the filtered data to a Kafka sink
         KafkaSink<TaskEvent> sink =
                 KafkaSink.<TaskEvent>builder()
-                        .setBootstrapServers(REMOTE_KAFKA_BROKER)
+                        .setBootstrapServers(LOCAL_KAFKA_BROKER)
                         .setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                         .setRecordSerializer(
                                 KafkaRecordSerializationSchema.builder()

@@ -35,19 +35,18 @@ import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import static org.apache.flink.streaming.api.CheckpointingMode.EXACTLY_ONCE;
 
 /** Other ideas: - average task runtime per priority - a histogram of task scheduling latency. */
 public class MaxTaskCompletionTimeFromKafka extends AppBase {
-    private static final Logger logger = LoggerFactory.getLogger(MaxTaskCompletionTimeFromKafka.class);
+    private static final Logger logger =
+            LoggerFactory.getLogger(MaxTaskCompletionTimeFromKafka.class);
 
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
     private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
     private static final String TASKS_GROUP = "taskGroup";
     public static final String TASKS_TOPIC = "wiki-edits";
-    public static final String CHECKPOINT_DIR = "file:///checkpoint";
-
+    public static final String CHECKPOINT_DIR = "file:///Users/albertan/checkpoint/data";
 
     public static void main(String[] args) throws Exception {
         GenericTypeInfo<Object> objectTypeInfo = new GenericTypeInfo<>(Object.class);
@@ -64,7 +63,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
         KafkaSource<TaskEvent> source =
                 KafkaSource.<TaskEvent>builder()
-                        .setBootstrapServers(REMOTE_KAFKA_BROKER)
+                        .setBootstrapServers(LOCAL_KAFKA_BROKER)
                         .setGroupId(TASKS_GROUP)
                         .setTopics(TASKS_TOPIC)
                         .setDeserializer(
@@ -256,7 +255,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         @Override
         public void processLatencyMarker(LatencyMarker latencyMarker) throws Exception {
             logger.info(
-                    "%{}%{}", "latency", System.currentTimeMillis() - latencyMarker.getMarkedTime());
+                    "%{}%{}",
+                    "latency", System.currentTimeMillis() - latencyMarker.getMarkedTime());
         }
     }
 }

@@ -39,7 +39,6 @@ import org.apache.flink.streaming.examples.statemachine.generator.EventsGenerato
 import org.apache.flink.streaming.examples.statemachine.kafka.EventDeSerializationSchema;
 import org.apache.flink.util.Collector;
 
-
 /**
  * Main class of the state machine example. This class implements the streaming application that
  * receives the stream of events and evaluates a state machine (per originating address) to validate
@@ -199,4 +198,3 @@ public class StateMachineExample {
         }
     }
 }
-
