@@ -67,12 +67,6 @@ under the License.
 			<version>${project.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-connector-base</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
 
 		<dependency>
 			<groupId>org.apache.flink</groupId>
@@ -380,9 +374,36 @@ under the License.
 						</configuration>
 					</execution>
 
-				</executions>
-			</plugin>
+					<!-- KafkaJobExample -->
+					<execution>
+						<id>KafkaJobExample</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>KafkaJobExample</classifier>
 
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.streaming.examples.clusterdata.kafkajob.MaxTaskCompletionTimeFromKafka</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>org/apache/flink/streaming/examples/clusterdata/datatypes/*.class</include>
+								<include>org/apache/flink/streaming/examples/clusterdata/kafkajob/*.class</include>
+								<include>org/apache/flink/streaming/examples/clusterdata/sources/*.class</include>
+								<include>org/apache/flink/streaming/examples/clusterdata/utils/*.class</include>
+								<include>META-INF/LICENSE</include>
+								<include>META-INF/NOTICE</include>
+							</includes>
+						</configuration>
+					</execution>
+
+				</executions>
+
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
