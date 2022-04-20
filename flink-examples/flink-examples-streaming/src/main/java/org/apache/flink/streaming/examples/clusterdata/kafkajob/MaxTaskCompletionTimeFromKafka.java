@@ -63,7 +63,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
         KafkaSource<TaskEvent> source =
                 KafkaSource.<TaskEvent>builder()
-                        .setBootstrapServers(LOCAL_KAFKA_BROKER)
+                        .setBootstrapServers(REMOTE_KAFKA_BROKER)
                         .setGroupId(TASKS_GROUP)
                         .setTopics(TASKS_TOPIC)
                         .setDeserializer(
