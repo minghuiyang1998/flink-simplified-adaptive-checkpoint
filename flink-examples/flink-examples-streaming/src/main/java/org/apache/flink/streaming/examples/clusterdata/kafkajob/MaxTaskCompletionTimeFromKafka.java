@@ -46,7 +46,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
     private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
     private static final String TASKS_GROUP = "taskGroup";
     public static final String TASKS_TOPIC = "wiki-edits";
-    public static final String CHECKPOINT_DIR = "file:///Users/albertan/checkpoint/data";
+    public static final String CHECKPOINT_DIR = "file:///home/CS551Team2/Checkpoint";
 
     public static void main(String[] args) throws Exception {
         GenericTypeInfo<Object> objectTypeInfo = new GenericTypeInfo<>(Object.class);
@@ -94,7 +94,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                         return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
                                     }
                                 })
-                        .flatMap(new CalculateTaskDuration());
+                        .flatMap(new CalculateTaskDuration())
+                        .disableChaining();
 
         DataStream<Tuple2<Long, Long>> maxDurationsPerJob =
                 taskDurations
@@ -108,7 +109,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                         return Tuple2.of(task.f0, task.f1);
                                     }
                                 })
-                        .flatMap(new TaskWithMinDurationPerJob());
+                        .flatMap(new TaskWithMinDurationPerJob())
+                        .disableChaining();
 
         maxDurationsPerJob.transform("Latency Sink", objectTypeInfo, new LatencySink<>(logger));
 
@@ -256,7 +258,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         public void processLatencyMarker(LatencyMarker latencyMarker) throws Exception {
             logger.info(
                     "%{}%{}",
-                    "latency", System.currentTimeMillis() - latencyMarker.getMarkedTime());
+                    "current_latency", System.currentTimeMillis() - latencyMarker.getMarkedTime());
         }
     }
 }
