@@ -14,7 +14,7 @@ public class AppBase {
     public static int parallelism = 4;
 
     public static final String PATH_TO_TASK_EVENT_DATA =
-            "/Users/albertan/Documents/CS551/flink-simplified-checkpoint/flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/clusterdata/data/task_events";
+            "/Users/yangminghui/Documents/codehub/cs551/flink-simplified-checkpoint/flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/clusterdata/data/task_events";
 
     public static SourceFunction<JobEvent> jobSourceOrTest(SourceFunction<JobEvent> source) {
         if (jobEvents == null) {
