@@ -375,31 +375,31 @@ under the License.
 					</execution>
 
 					<!-- KafkaJobExample -->
-					<execution>
-						<id>KafkaJobExample</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<classifier>KafkaJobExample</classifier>
+<!--					<execution>-->
+<!--						<id>KafkaJobExample</id>-->
+<!--						<phase>package</phase>-->
+<!--						<goals>-->
+<!--							<goal>jar</goal>-->
+<!--						</goals>-->
+<!--						<configuration>-->
+<!--							<classifier>KafkaJobExample</classifier>-->
 
-							<archive>
-								<manifestEntries>
-									<program-class>org.apache.flink.streaming.examples.clusterdata.kafkajob.MaxTaskCompletionTimeFromKafka</program-class>
-								</manifestEntries>
-							</archive>
+<!--							<archive>-->
+<!--								<manifestEntries>-->
+<!--									<program-class>org.apache.flink.streaming.examples.clusterdata.kafkajob.MaxTaskCompletionTimeFromKafka</program-class>-->
+<!--								</manifestEntries>-->
+<!--							</archive>-->
 
-							<includes>
-								<include>org/apache/flink/streaming/examples/clusterdata/datatypes/*.class</include>
-								<include>org/apache/flink/streaming/examples/clusterdata/kafkajob/*.class</include>
-								<include>org/apache/flink/streaming/examples/clusterdata/sources/*.class</include>
-								<include>org/apache/flink/streaming/examples/clusterdata/utils/*.class</include>
-								<include>META-INF/LICENSE</include>
-								<include>META-INF/NOTICE</include>
-							</includes>
-						</configuration>
-					</execution>
+<!--							<includes>-->
+<!--								<include>org/apache/flink/streaming/examples/clusterdata/datatypes/*.class</include>-->
+<!--								<include>org/apache/flink/streaming/examples/clusterdata/kafkajob/*.class</include>-->
+<!--								<include>org/apache/flink/streaming/examples/clusterdata/sources/*.class</include>-->
+<!--								<include>org/apache/flink/streaming/examples/clusterdata/utils/*.class</include>-->
+<!--								<include>META-INF/LICENSE</include>-->
+<!--								<include>META-INF/NOTICE</include>-->
+<!--							</includes>-->
+<!--						</configuration>-->
+<!--					</execution>-->
 
 				</executions>
 
