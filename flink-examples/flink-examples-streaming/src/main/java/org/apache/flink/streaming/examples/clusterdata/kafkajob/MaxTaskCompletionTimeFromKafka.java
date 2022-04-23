@@ -30,7 +30,6 @@ import org.apache.flink.streaming.runtime.streamrecord.LatencyMarker;
 import org.apache.flink.util.Collector;
 
 import com.esotericsoftware.minlog.Log;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
     private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
-    private static final String TASKS_GROUP = "task_group_web1";
+    private static final String TASKS_GROUP = "task_group_web4";
     public static final String TASKS_TOPIC = "wiki-edits";
     public static final String CHECKPOINT_DIR = "file:///home/CS551Team2/Checkpoint";
 
@@ -68,7 +67,6 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                         .setDeserializer(
                                 KafkaRecordDeserializationSchema.valueOnly(new TaskEventSchema()))
                         // TODO: adjust speed by control poll records
-                        .setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "50")
                         .setProperty(
                                 KafkaSourceOptions.REGISTER_KAFKA_CONSUMER_METRICS.key(), "true")
                         // If each partition has a committed offset, the offset will be consumed
