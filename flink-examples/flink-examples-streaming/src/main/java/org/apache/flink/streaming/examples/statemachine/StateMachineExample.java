@@ -22,6 +22,7 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.java.typeutils.GenericTypeInfo;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
@@ -32,12 +33,19 @@ import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+import org.apache.flink.streaming.api.operators.StreamSink;
+import org.apache.flink.streaming.examples.clusterdata.kafkajob.MaxTaskCompletionTimeFromKafka;
 import org.apache.flink.streaming.examples.statemachine.dfa.State;
 import org.apache.flink.streaming.examples.statemachine.event.Alert;
 import org.apache.flink.streaming.examples.statemachine.event.Event;
 import org.apache.flink.streaming.examples.statemachine.generator.EventsGeneratorSource;
 import org.apache.flink.streaming.examples.statemachine.kafka.EventDeSerializationSchema;
+import org.apache.flink.streaming.runtime.streamrecord.LatencyMarker;
 import org.apache.flink.util.Collector;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main class of the state machine example. This class implements the streaming application that
@@ -45,6 +53,8 @@ import org.apache.flink.util.Collector;
  * that the events follow the state machine's rules.
  */
 public class StateMachineExample {
+    private static final Logger logger =
+            LoggerFactory.getLogger(MaxTaskCompletionTimeFromKafka.class);
 
     /**
      * Main entry point for the program.
@@ -52,6 +62,8 @@ public class StateMachineExample {
      * @param args The command line arguments.
      */
     public static void main(String[] args) throws Exception {
+
+        GenericTypeInfo<Object> objectTypeInfo = new GenericTypeInfo<>(Object.class);
 
         // ---- print some usage help ----
 
@@ -73,12 +85,13 @@ public class StateMachineExample {
 
         // create the environment to create streams and configure execution
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.enableCheckpointing(3000L);
+        //        env.enableCheckpointing(3000L);
         //        env.enableCheckpointAdapter(10000L);
         //        env.setCheckpointAdapterMetricInterval(5000L);
         //        env.setCheckpointAdapterAllowRange(0.8);
         //        env.setCheckpointAdapterChangeInterval(10L);
         //        env.setCheckpointAdapterDebounceMode(true);
+        env.getConfig().setLatencyTrackingInterval(10000L);
 
         final String stateBackend = params.get("backend", "memory");
         if ("hashmap".equals(stateBackend)) {
@@ -143,7 +156,7 @@ public class StateMachineExample {
 
         // output the alerts to std-out
         if (outputFile == null) {
-            alerts.print();
+            alerts.transform("Latency Sink", objectTypeInfo, new LatencySink<>(logger));
         } else {
             alerts.writeAsText(outputFile, FileSystem.WriteMode.OVERWRITE).setParallelism(1);
         }
@@ -196,5 +209,25 @@ public class StateMachineExample {
                 currentState.update(nextState);
             }
         }
+    }
+}
+
+class LatencySink<T> extends StreamSink<T> {
+    private final Logger logger;
+
+    public LatencySink(Logger logger) {
+        super(
+                new SinkFunction() {
+                    @Override
+                    public void invoke(Object value, Context ctx) {}
+                });
+        this.logger = logger;
+    }
+
+    @Override
+    public void processLatencyMarker(LatencyMarker latencyMarker) throws Exception {
+        logger.warn(
+                "%{}%{}",
+                "current_latency", System.currentTimeMillis() - latencyMarker.getMarkedTime());
     }
 }
