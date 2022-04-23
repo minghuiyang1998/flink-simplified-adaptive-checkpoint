@@ -30,8 +30,6 @@ import org.apache.flink.streaming.runtime.streamrecord.LatencyMarker;
 import org.apache.flink.util.Collector;
 
 import com.esotericsoftware.minlog.Log;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +42,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
     private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
-    private static final String TASKS_GROUP = "taskGroup";
+    private static final String TASKS_GROUP = "task_group_web4";
     public static final String TASKS_TOPIC = "wiki-edits";
     public static final String CHECKPOINT_DIR = "file:///home/CS551Team2/Checkpoint";
 
@@ -53,7 +51,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(2);
+        //  env.setParallelism(2);
 
         // set up checkpointing
         env.enableCheckpointing(10000L, EXACTLY_ONCE);
@@ -69,17 +67,12 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                         .setDeserializer(
                                 KafkaRecordDeserializationSchema.valueOnly(new TaskEventSchema()))
                         // TODO: adjust speed by control poll records
-                        .setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "5")
                         .setProperty(
                                 KafkaSourceOptions.REGISTER_KAFKA_CONSUMER_METRICS.key(), "true")
-                        // recover from checkpoint
-                        .setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
-                        .setProperty(KafkaSourceOptions.COMMIT_OFFSETS_ON_CHECKPOINT.key(), "true")
                         // If each partition has a committed offset, the offset will be consumed
                         // from the committed offset.
                         // Start consuming from scratch when there is no submitted offset
-                        .setStartingOffsets(
-                                OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST))
+                        .setStartingOffsets(OffsetsInitializer.earliest())
                         .build();
         DataStream<TaskEvent> events =
                 env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source");
@@ -94,8 +87,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                         return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
                                     }
                                 })
-                        .flatMap(new CalculateTaskDuration())
-                        .disableChaining();
+                        .flatMap(new CalculateTaskDuration());
+        // disableChaining();
 
         DataStream<Tuple2<Long, Long>> maxDurationsPerJob =
                 taskDurations
@@ -109,8 +102,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                         return Tuple2.of(task.f0, task.f1);
                                     }
                                 })
-                        .flatMap(new TaskWithMinDurationPerJob())
-                        .disableChaining();
+                        .flatMap(new TaskWithMinDurationPerJob());
+        // disableChaining();
 
         maxDurationsPerJob.transform("Latency Sink", objectTypeInfo, new LatencySink<>(logger));
 
