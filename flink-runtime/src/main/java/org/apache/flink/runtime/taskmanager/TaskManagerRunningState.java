@@ -38,9 +38,6 @@ public class TaskManagerRunningState implements Serializable {
 
     private final ExecutionAttemptID executionId;
 
-    /** Serialized user-defined accumulators */
-    private final TaskIOMetricGroup taskIOMetricGroup;
-
     private final double numRecordsInRate;
 
     private final double idealProcessingRate;
@@ -64,7 +61,6 @@ public class TaskManagerRunningState implements Serializable {
         }
 
         this.executionId = executionId;
-        this.taskIOMetricGroup = taskIOMetricGroup;
         Meter numRecordsInRate = taskIOMetricGroup.getNumRecordsInRate();
         this.numRecordsInRate = numRecordsInRate.getRate();
         double busyTimeMsPerSecond = taskIOMetricGroup.getBusyTimePerSecond();
@@ -74,10 +70,6 @@ public class TaskManagerRunningState implements Serializable {
 
     public ExecutionAttemptID getExecutionId() {
         return executionId;
-    }
-
-    public TaskIOMetricGroup getTaskIOMetricGroup() {
-        return taskIOMetricGroup;
     }
 
     public double getNumRecordsInRate() {
