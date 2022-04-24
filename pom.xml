@@ -59,7 +59,7 @@ under the License.
 		<module>flink-optimizer</module>
 		<module>flink-streaming-java</module>
 		<module>flink-connectors</module>
-		<module>flink-examples</module>
+		<module>flink-examples/flink-examples-streaming</module>
 		<module>flink-clients</module>
 		<module>flink-queryable-state</module>
 		<module>flink-tests</module>
