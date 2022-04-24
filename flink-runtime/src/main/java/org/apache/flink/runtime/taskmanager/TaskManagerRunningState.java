@@ -34,8 +34,6 @@ import java.io.Serializable;
  */
 public class TaskManagerRunningState implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-
     private final ExecutionAttemptID executionId;
 
     private final double numRecordsInRate;
@@ -49,22 +47,21 @@ public class TaskManagerRunningState implements Serializable {
      * never throw an exception.
      *
      * @param executionId the ID of the task execution whose state is to be reported
-     * @param taskIOMetricGroup The flink and user-defined accumulators which may be null.
      */
     public TaskManagerRunningState(
             ExecutionAttemptID executionId,
             long checkpointID,
-            TaskIOMetricGroup taskIOMetricGroup) {
+            double numRecordsInRate,
+            double idealProcessingRate
+            ) {
 
-        if (executionId == null || taskIOMetricGroup == null) {
+        if (executionId == null) {
             throw new NullPointerException();
         }
 
         this.executionId = executionId;
-        Meter numRecordsInRate = taskIOMetricGroup.getNumRecordsInRate();
-        this.numRecordsInRate = numRecordsInRate.getRate();
-        double busyTimeMsPerSecond = taskIOMetricGroup.getBusyTimePerSecond();
-        this.idealProcessingRate = this.numRecordsInRate * 1000 / busyTimeMsPerSecond;
+        this.numRecordsInRate = numRecordsInRate;
+        this.idealProcessingRate = idealProcessingRate;
         this.checkpointID = checkpointID;
     }
 
