@@ -59,6 +59,11 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         env.setStateBackend(new HashMapStateBackend());
         env.getCheckpointConfig().setCheckpointStorage(CHECKPOINT_DIR);
 
+        // enable Adapter
+        env.enableCheckpointAdapter(10000L);
+        // env.setCheckpointAdapterMetricInterval(5000L);
+        // env.setCheckpointAdapterAllowRange(0.4);
+
         KafkaSource<TaskEvent> source =
                 KafkaSource.<TaskEvent>builder()
                         .setBootstrapServers(REMOTE_KAFKA_BROKER)
@@ -66,7 +71,6 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                         .setTopics(TASKS_TOPIC)
                         .setDeserializer(
                                 KafkaRecordDeserializationSchema.valueOnly(new TaskEventSchema()))
-                        // TODO: adjust speed by control poll records
                         .setProperty(
                                 KafkaSourceOptions.REGISTER_KAFKA_CONSUMER_METRICS.key(), "true")
                         // If each partition has a committed offset, the offset will be consumed
