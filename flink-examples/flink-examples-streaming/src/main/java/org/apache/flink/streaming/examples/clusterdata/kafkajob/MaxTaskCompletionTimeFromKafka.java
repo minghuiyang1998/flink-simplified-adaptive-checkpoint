@@ -51,10 +51,14 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        //        env.enableCheckpointAdapter(10000L);
+        //        env.setCheckpointAdapterMetricInterval(5000L);
+        //        env.setCheckpointAdapterAllowRange(0.4);
         //  env.setParallelism(2);
 
         // set up checkpointing
         env.enableCheckpointing(10000L, EXACTLY_ONCE);
+
         // TODO: statebackend here
         env.setStateBackend(new HashMapStateBackend());
         env.getCheckpointConfig().setCheckpointStorage(CHECKPOINT_DIR);
