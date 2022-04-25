@@ -18,9 +18,7 @@
 
 package org.apache.flink.runtime.taskmanager;
 
-import org.apache.flink.metrics.Meter;
 import org.apache.flink.runtime.executiongraph.ExecutionAttemptID;
-import org.apache.flink.runtime.metrics.groups.TaskIOMetricGroup;
 
 import java.io.Serializable;
 
@@ -52,8 +50,7 @@ public class TaskManagerRunningState implements Serializable {
             ExecutionAttemptID executionId,
             long checkpointID,
             double numRecordsInRate,
-            double idealProcessingRate
-            ) {
+            double idealProcessingRate) {
 
         if (executionId == null) {
             throw new NullPointerException();
@@ -79,5 +76,25 @@ public class TaskManagerRunningState implements Serializable {
 
     public long getCheckpointID() {
         return checkpointID;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TaskExecutionState) {
+            TaskManagerRunningState other = (TaskManagerRunningState) obj;
+            return other.executionId.equals(this.executionId);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return executionId.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("TaskExecutionState executionId=%s", executionId);
     }
 }

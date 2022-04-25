@@ -1317,7 +1317,26 @@ public class Task
     // ------------------------------------------------------------------------
     //  Notifications on the invokable
     // ------------------------------------------------------------------------
+    private class InnerTimerTask extends TimerTask {
+        private long interval;
 
+        public InnerTimerTask(long internal) {
+            this.interval = internal;
+        }
+
+        @Override
+        public void run() {
+            LOG.info(interval + "ms passed, submit metrics!");
+            TaskIOMetricGroup taskIOMetricGroup =
+                    metrics.getIOMetricGroup(); // include numRecordIn + busy
+            Meter numRecordsInRate = taskIOMetricGroup.getNumRecordsInRate();
+            double throughput = numRecordsInRate.getRate();
+            double busyTimeMsPerSecond = taskIOMetricGroup.getBusyTimePerSecond();
+            double idealProcessingRate = throughput * 1000 / busyTimeMsPerSecond;
+            taskManagerActions.submitTaskExecutorRunningStatus(
+                    new TaskManagerRunningState(executionId, -1, throughput, idealProcessingRate));
+        }
+    }
     /**
      * Schedule metrics submission to checkpoint adapter in jobmaster
      *
@@ -1330,27 +1349,8 @@ public class Task
         } else {
             isSubmitAfterCheckpoint = false;
             // set timer
-            timer.scheduleAtFixedRate(
-                    new TimerTask() {
-                        @Override
-                        public void run() {
-                            LOG.info(interval + "ms passed, submit metrics!");
-                            TaskIOMetricGroup taskIOMetricGroup =
-                                    metrics.getIOMetricGroup(); // include numRecordIn + busy
-                            Meter numRecordsInRate = taskIOMetricGroup.getNumRecordsInRate();
-                            double throughput = numRecordsInRate.getRate();
-                            double busyTimeMsPerSecond = taskIOMetricGroup.getBusyTimePerSecond();
-                            double idealProcessingRate = throughput * 1000 / busyTimeMsPerSecond;
-                            taskManagerActions.submitTaskExecutorRunningStatus(
-                                    new TaskManagerRunningState(
-                                            executionId,
-                                            -1,
-                                            throughput,
-                                            idealProcessingRate));
-                        }
-                    },
-                    interval,
-                    interval);
+            TimerTask task = new InnerTimerTask(interval);
+            timer.scheduleAtFixedRate(task, interval, interval);
             // TODO: cancel timer ?
         }
     }
@@ -1459,10 +1459,7 @@ public class Task
             double idealProcessingRate = throughput * 1000 / busyTimeMsPerSecond;
             taskManagerActions.submitTaskExecutorRunningStatus(
                     new TaskManagerRunningState(
-                            executionId,
-                            checkpointID,
-                            throughput,
-                            idealProcessingRate));
+                            executionId, checkpointID, throughput, idealProcessingRate));
         }
 
         if (executionState == ExecutionState.RUNNING) {

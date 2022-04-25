@@ -36,6 +36,7 @@ import org.apache.flink.core.io.InputSplit;
 import org.apache.flink.core.io.InputSplitAssigner;
 import org.apache.flink.core.io.InputSplitSource;
 import org.apache.flink.core.testutils.OneShotLatch;
+import org.apache.flink.metrics.Meter;
 import org.apache.flink.runtime.checkpoint.CheckpointProperties;
 import org.apache.flink.runtime.checkpoint.CheckpointRecoveryFactory;
 import org.apache.flink.runtime.checkpoint.CheckpointRetentionPolicy;
@@ -1400,9 +1401,14 @@ public class JobMasterTest extends TestLogger {
             // finish the producer task
             TaskMetricGroup task = UnregisteredMetricGroups.createUnregisteredTaskMetricGroup();
             TaskIOMetricGroup taskIO = task.getIOMetricGroup();
+            Meter numRecordsInRate = taskIO.getNumRecordsInRate();
+            double throughput = numRecordsInRate.getRate();
+            double busyTimeMsPerSecond = taskIO.getBusyTimePerSecond();
+            double idealProcessingRate = throughput * 1000 / busyTimeMsPerSecond;
             jobMasterGateway
                     .submitTaskManagerRunningState(
-                            new TaskManagerRunningState(executionAttemptId, 1l, taskIO))
+                            new TaskManagerRunningState(
+                                    executionAttemptId, 1l, throughput, idealProcessingRate))
                     .get();
 
             // request the state of the result partition of the producer
