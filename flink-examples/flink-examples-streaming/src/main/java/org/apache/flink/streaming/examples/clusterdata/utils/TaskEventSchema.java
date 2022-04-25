@@ -23,11 +23,6 @@ public class TaskEventSchema
     @Override
     public TaskEvent deserialize(byte[] message) {
         // TODO: we don't write them to Kafka in the same order we read them from the gzip file!
-        try {
-            Thread.sleep(2);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
         String line = new String(message);
         String[] tokens = line.split(",");

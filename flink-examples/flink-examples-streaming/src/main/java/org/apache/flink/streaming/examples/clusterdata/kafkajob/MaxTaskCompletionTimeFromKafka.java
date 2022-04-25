@@ -29,32 +29,28 @@ import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import static org.apache.flink.streaming.api.CheckpointingMode.EXACTLY_ONCE;
 
 /** Other ideas: - average task runtime per priority - a histogram of task scheduling latency. */
 public class MaxTaskCompletionTimeFromKafka extends AppBase {
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
     private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
-    private static final String TASKS_GROUP = "task_group_web4";
+    private static final String TASKS_GROUP = "task_group_1";
     public static final String TASKS_TOPIC = "wiki-edits";
     public static final String CHECKPOINT_DIR = "file:///home/CS551Team2/Checkpoint";
 
     public static void main(String[] args) throws Exception {
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        //  env.setParallelism(2);
 
         // set up checkpointing
-        env.enableCheckpointing(10000L, EXACTLY_ONCE);
+        env.enableCheckpointing(20000L, EXACTLY_ONCE);
         env.setStateBackend(new HashMapStateBackend());
         env.getCheckpointConfig().setCheckpointStorage(CHECKPOINT_DIR);
 
         // enable Adapter
-        env.enableCheckpointAdapter(10000L);
-        env.setCheckpointAdapterMetricInterval(5000L);
+        env.enableCheckpointAdapter(30000L);
+        env.setCheckpointAdapterMetricInterval(10000L);
         env.setCheckpointAdapterAllowRange(0.3);
 
         KafkaSource<TaskEvent> source =
@@ -113,28 +109,24 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
     private static final class CalcLatency
             implements MapFunction<Tuple2<TaskEvent, Long>, Tuple2<Long, Long>> {
-        Long latestLatency = -1L;
-        Long interval = 5000L;
+        private long count = 0;
+        private long sum = 0;
+        private int threshold = 100;
         private static final Logger lg = LoggerFactory.getLogger(CalcLatency.class);
-
-        public CalcLatency() {
-            Timer timer = new Timer();
-            timer.scheduleAtFixedRate(
-                    new TimerTask() {
-                        @Override
-                        public void run() {
-                            lg.info("current_latency: " + latestLatency);
-                        }
-                    },
-                    interval,
-                    interval);
-        }
 
         @Override
         public Tuple2<Long, Long> map(Tuple2<TaskEvent, Long> tuple2) throws Exception {
             Long currentTime = System.currentTimeMillis();
             Long eventStartTime = tuple2.f1;
-            latestLatency = currentTime - eventStartTime;
+            Long latency = currentTime - eventStartTime;
+            count += 1;
+            sum += latency;
+            if (count != 0 && count % threshold == 0) {
+                long aver = sum / count;
+                lg.info("average latency for " + threshold + " : " + aver);
+                count = 0;
+                sum = 0;
+            }
             return Tuple2.of(tuple2.f0.jobId, tuple2.f1);
         }
     }
@@ -144,6 +136,11 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
         @Override
         public Tuple2<TaskEvent, Long> map(TaskEvent value) throws Exception {
+            // try {
+            //   Thread.sleep(1);
+            // } catch (Exception e) {
+            //   e.printStackTrace();
+            // }
             Long timestamp = System.currentTimeMillis();
             return new Tuple2<>(value, timestamp);
         }
