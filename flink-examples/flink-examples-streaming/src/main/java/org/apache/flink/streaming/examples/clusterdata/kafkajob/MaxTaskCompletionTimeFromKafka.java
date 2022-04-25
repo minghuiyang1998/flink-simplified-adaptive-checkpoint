@@ -83,8 +83,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                         return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
                                     }
                                 })
-                        .flatMap(new CalculateTaskDuration())
-                        .setParallelism(2);
+                        .flatMap(new CalculateTaskDuration());
         // disableChaining();
 
         DataStream<Tuple2<Long, Long>> maxDurationsPerJob =
@@ -139,11 +138,6 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
         @Override
         public Tuple2<TaskEvent, Long> map(TaskEvent value) throws Exception {
-            // try {
-            // Thread.sleep(1);
-            // catch (Exception e) {
-            // e.printStackTrace();
-            // }
             Long timestamp = System.currentTimeMillis();
             return new Tuple2<>(value, timestamp);
         }
