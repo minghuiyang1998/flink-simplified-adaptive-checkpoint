@@ -12,7 +12,6 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.api.java.typeutils.GenericTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.KafkaSourceOptions;
@@ -21,16 +20,12 @@ import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDe
 import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.streaming.api.operators.StreamSink;
 import org.apache.flink.streaming.examples.clusterdata.datatypes.EventType;
 import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 import org.apache.flink.streaming.examples.clusterdata.utils.AppBase;
 import org.apache.flink.streaming.examples.clusterdata.utils.TaskEventSchema;
-import org.apache.flink.streaming.runtime.streamrecord.LatencyMarker;
 import org.apache.flink.util.Collector;
 
-import com.esotericsoftware.minlog.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +36,6 @@ import static org.apache.flink.streaming.api.CheckpointingMode.EXACTLY_ONCE;
 
 /** Other ideas: - average task runtime per priority - a histogram of task scheduling latency. */
 public class MaxTaskCompletionTimeFromKafka extends AppBase {
-    private static final Logger logger =
-            LoggerFactory.getLogger(MaxTaskCompletionTimeFromKafka.class);
-
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
     private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
     private static final String TASKS_GROUP = "task_group_web4";
@@ -51,19 +43,12 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
     public static final String CHECKPOINT_DIR = "file:///home/CS551Team2/Checkpoint";
 
     public static void main(String[] args) throws Exception {
-        GenericTypeInfo<Object> objectTypeInfo = new GenericTypeInfo<>(Object.class);
-
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        //        env.enableCheckpointAdapter(10000L);
-        //        env.setCheckpointAdapterMetricInterval(5000L);
-        //        env.setCheckpointAdapterAllowRange(0.4);
         //  env.setParallelism(2);
 
         // set up checkpointing
         env.enableCheckpointing(10000L, EXACTLY_ONCE);
-
-        // TODO: statebackend here
         env.setStateBackend(new HashMapStateBackend());
         env.getCheckpointConfig().setCheckpointStorage(CHECKPOINT_DIR);
 
@@ -104,7 +89,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                         .flatMap(new CalculateTaskDuration());
         // disableChaining();
 
-        DataStream<Tuple2<TaskEvent, Long>> maxDurationsPerJob =
+        DataStream<Tuple2<Long, Long>> maxDurationsPerJob =
                 taskDurations
                         // key by priority
                         .keyBy(
@@ -118,41 +103,39 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                     }
                                 })
                         .flatMap(new TaskWithMinDurationPerJob())
-                        .map(new CalcLatency(logger));
+                        .map(new CalcLatency());
         // disableChaining();
 
-        maxDurationsPerJob.transform("Latency Sink", objectTypeInfo, new LatencySink<>(logger));
+        printOrTest(maxDurationsPerJob);
 
         env.execute();
     }
 
     private static final class CalcLatency
-            implements MapFunction<Tuple2<TaskEvent, Long>, Tuple2<TaskEvent, Long>> {
-        private final Logger logger;
-        Long latestLatency;
-        private final Timer timer;
+            implements MapFunction<Tuple2<TaskEvent, Long>, Tuple2<Long, Long>> {
+        Long latestLatency = -1L;
         Long interval = 5000L;
+        private static final Logger lg = LoggerFactory.getLogger(CalcLatency.class);
 
-        public CalcLatency(Logger logger) {
-            this.logger = logger;
-            timer = new Timer();
+        public CalcLatency() {
+            Timer timer = new Timer();
+            timer.scheduleAtFixedRate(
+                    new TimerTask() {
+                        @Override
+                        public void run() {
+                            lg.info("current_latency: " + latestLatency);
+                        }
+                    },
+                    interval,
+                    interval);
         }
 
         @Override
-        public Tuple2<TaskEvent, Long> map(Tuple2<TaskEvent, Long> tuple2) throws Exception {
+        public Tuple2<Long, Long> map(Tuple2<TaskEvent, Long> tuple2) throws Exception {
             Long currentTime = System.currentTimeMillis();
             Long eventStartTime = tuple2.f1;
             latestLatency = currentTime - eventStartTime;
-
-            class InnerTTask extends TimerTask {
-                @Override
-                public void run() {
-                    logger.info("%{}%{}", "current_latency", latestLatency);
-                }
-            }
-
-            timer.scheduleAtFixedRate(new InnerTTask(), interval, interval);
-            return tuple2;
+            return Tuple2.of(tuple2.f0.jobId, tuple2.f1);
         }
     }
 
@@ -244,7 +227,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                 throws Exception {
             TaskEvent taskEvent = tuple2.f0;
             Tuple2<Long, Integer> taskKey = new Tuple2<>(taskEvent.jobId, taskEvent.taskIndex);
-            Log.info("jobID: " + taskEvent.jobId + " taskIndex: " + taskEvent.taskIndex);
+            // Log.info("jobID: " + taskEvent.jobId + " taskIndex: " + taskEvent.taskIndex);
             Integer count = countMessages.value();
             if (count == null) {
                 countMessages.update(1);
@@ -264,10 +247,11 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                         }
                     } else {
                         // stored event is a FINISH => output the duration
-                        out.collect(new Tuple3<>(
-                                tuple2.f0,
-                                tuple2.f1,
-                                stored.timestamp - taskEvent.timestamp));
+                        out.collect(
+                                new Tuple3<>(
+                                        tuple2.f0,
+                                        tuple2.f1,
+                                        stored.timestamp - taskEvent.timestamp));
                         // clean-up state
                         events.remove(taskKey);
                     }
@@ -279,36 +263,14 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                 // this is a FINISH event: compute duration and emit downstream
                 if (events.contains(taskKey)) {
                     long submitTime = events.get(taskKey).timestamp;
-                    out.collect(new Tuple3<>(
-                            tuple2.f0,
-                            tuple2.f1,
-                            taskEvent.timestamp - submitTime));
+                    out.collect(
+                            new Tuple3<>(tuple2.f0, tuple2.f1, taskEvent.timestamp - submitTime));
                     events.remove(taskKey);
                 } else {
                     // this is an unmatched FINISH event => store
                     events.put(taskKey, taskEvent);
                 }
             }
-        }
-    }
-
-    private static class LatencySink<T> extends StreamSink<T> {
-        private final Logger logger;
-
-        public LatencySink(Logger logger) {
-            super(
-                    new SinkFunction<T>() {
-                        @Override
-                        public void invoke(Object value, Context ctx) {}
-                    });
-            this.logger = logger;
-        }
-
-        @Override
-        public void processLatencyMarker(LatencyMarker latencyMarker) throws Exception {
-            logger.info(
-                    "%{}%{}",
-                    "current_latency", System.currentTimeMillis() - latencyMarker.getMarkedTime());
         }
     }
 }
