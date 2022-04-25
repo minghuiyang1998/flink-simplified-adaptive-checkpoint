@@ -68,7 +68,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                         .setStartingOffsets(OffsetsInitializer.earliest())
                         .build();
         DataStream<TaskEvent> events =
-                env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source");
+                env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source")
+                        .disableChaining();
 
         // get SUBMIT and FINISH events in one place "jobId", "taskIndex", out put task duration
         DataStream<Tuple3<TaskEvent, Long, Long>> taskDurations =
@@ -82,7 +83,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                         return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
                                     }
                                 })
-                        .flatMap(new CalculateTaskDuration());
+                        .flatMap(new CalculateTaskDuration())
+                        .setParallelism(2);
         // disableChaining();
 
         DataStream<Tuple2<Long, Long>> maxDurationsPerJob =
@@ -99,6 +101,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                     }
                                 })
                         .flatMap(new TaskWithMinDurationPerJob())
+                        .disableChaining()
                         .map(new CalcLatency());
         // disableChaining();
 
@@ -137,9 +140,9 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         @Override
         public Tuple2<TaskEvent, Long> map(TaskEvent value) throws Exception {
             // try {
-            //   Thread.sleep(1);
-            // } catch (Exception e) {
-            //   e.printStackTrace();
+            // Thread.sleep(1);
+            // catch (Exception e) {
+            // e.printStackTrace();
             // }
             Long timestamp = System.currentTimeMillis();
             return new Tuple2<>(value, timestamp);
@@ -256,7 +259,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                     // first SUBMIT we see for this task
                     events.put(taskKey, taskEvent);
                 }
-            } else {
+            } else if (taskEvent.eventType.equals(EventType.FINISH)) {
                 // this is a FINISH event: compute duration and emit downstream
                 if (events.contains(taskKey)) {
                     long submitTime = events.get(taskKey).timestamp;
