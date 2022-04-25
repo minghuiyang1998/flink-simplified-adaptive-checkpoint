@@ -1,6 +1,7 @@
 package org.apache.flink.streaming.examples.clusterdata.kafkajob;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -18,6 +19,7 @@ import org.apache.flink.connector.kafka.source.KafkaSourceOptions;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
 import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
+import org.apache.flink.runtime.taskexecutor.TaskExecutor;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
@@ -32,6 +34,9 @@ import org.apache.flink.util.Collector;
 import com.esotericsoftware.minlog.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static org.apache.flink.streaming.api.CheckpointingMode.EXACTLY_ONCE;
 
@@ -66,7 +71,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         // enable Adapter
         env.enableCheckpointAdapter(10000L);
         env.setCheckpointAdapterMetricInterval(5000L);
-        env.setCheckpointAdapterAllowRange(0.4);
+        env.setCheckpointAdapterAllowRange(0.3);
 
         KafkaSource<TaskEvent> source =
                 KafkaSource.<TaskEvent>builder()
@@ -86,31 +91,34 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                 env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source");
 
         // get SUBMIT and FINISH events in one place "jobId", "taskIndex", out put task duration
-        DataStream<Tuple3<Long, Integer, Long>> taskDurations =
-                events.keyBy(
-                                new KeySelector<TaskEvent, Tuple2<Integer, Long>>() {
+        DataStream<Tuple3<TaskEvent, Long, Long>> taskDurations =
+                events.map(new addProcessTime())
+                        .keyBy(
+                                new KeySelector<Tuple2<TaskEvent, Long>, Tuple2<Integer, Long>>() {
                                     @Override
-                                    public Tuple2<Integer, Long> getKey(TaskEvent taskEvent)
+                                    public Tuple2<Integer, Long> getKey(Tuple2<TaskEvent, Long> tuple)
                                             throws Exception {
+                                        TaskEvent taskEvent = tuple.f0;
                                         return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
                                     }
                                 })
                         .flatMap(new CalculateTaskDuration());
         // disableChaining();
 
-        DataStream<Tuple2<Long, Long>> maxDurationsPerJob =
+        DataStream<Tuple2<TaskEvent, Long>> maxDurationsPerJob =
                 taskDurations
                         // key by priority
                         .keyBy(
-                                new KeySelector<
-                                        Tuple3<Long, Integer, Long>, Tuple2<Long, Integer>>() {
+                                new KeySelector<Tuple3<TaskEvent, Long, Long>, Tuple2<Integer, Long>>() {
                                     @Override
-                                    public Tuple2<Long, Integer> getKey(
-                                            Tuple3<Long, Integer, Long> task) throws Exception {
-                                        return Tuple2.of(task.f0, task.f1);
+                                    public Tuple2<Integer, Long> getKey(Tuple3<TaskEvent, Long, Long> tuple3)
+                                            throws Exception {
+                                        TaskEvent taskEvent = tuple3.f0;
+                                        return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
                                     }
                                 })
-                        .flatMap(new TaskWithMinDurationPerJob());
+                        .flatMap(new TaskWithMinDurationPerJob())
+                        .map(new calcLatency(logger));
         // disableChaining();
 
         maxDurationsPerJob.transform("Latency Sink", objectTypeInfo, new LatencySink<>(logger));
@@ -118,8 +126,48 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         env.execute();
     }
 
+    private static final class calcLatency implements MapFunction<Tuple2<TaskEvent, Long>, Tuple2<TaskEvent, Long>> {
+        private final Logger logger;
+        Long latestLatency;
+        private final Timer timer;
+        Long interval = 5000L;
+
+        public calcLatency(Logger logger) {
+            this.logger = logger;
+            timer = new Timer();
+        }
+
+        @Override
+        public Tuple2<TaskEvent, Long> map(Tuple2<TaskEvent, Long> tuple2) throws Exception {
+            Long currentTime = System.currentTimeMillis();
+            Long eventStartTime = tuple2.f1;
+            latestLatency = currentTime - eventStartTime;
+
+            class InnerTTask extends TimerTask {
+                @Override
+                public void run() {
+                    logger.info(
+                            "%{}%{}",
+                            "current_latency", latestLatency);
+                }
+            }
+            
+            timer.scheduleAtFixedRate(new InnerTTask(), interval, interval);
+            return tuple2;
+        }
+    }
+
+    private static final class addProcessTime implements MapFunction<TaskEvent, Tuple2<TaskEvent, Long>> {
+
+        @Override
+        public Tuple2<TaskEvent, Long> map(TaskEvent value) throws Exception {
+            Long timestamp = System.currentTimeMillis();
+            return new Tuple2<>(value, timestamp);
+        }
+    }
+
     private static final class TaskWithMinDurationPerJob
-            extends RichFlatMapFunction<Tuple3<Long, Integer, Long>, Tuple2<Long, Long>> {
+            extends RichFlatMapFunction<Tuple3<TaskEvent, Long, Long>, Tuple2<TaskEvent, Long>> {
 
         private MapState<Long, Long> minDurationPerJob;
         private ValueState<Integer> countCompletedTasks;
@@ -136,7 +184,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         }
 
         @Override
-        public void flatMap(Tuple3<Long, Integer, Long> task, Collector<Tuple2<Long, Long>> out)
+        public void flatMap(Tuple3<TaskEvent, Long, Long> tuple3, Collector<Tuple2<TaskEvent, Long>> out)
                 throws Exception {
             // <job, maxTask>
             Integer count = countCompletedTasks.value();
@@ -145,8 +193,9 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
             } else {
                 countCompletedTasks.update(count + 1);
             }
-            Long currJobId = task.f0;
-            Long duration = task.f2;
+            TaskEvent task = tuple3.f0;
+            Long currJobId = task.jobId;
+            Long duration = tuple3.f2;
             Long minInJob = minDurationPerJob.get(currJobId);
             if (minInJob == null) {
                 minInJob = duration;
@@ -154,12 +203,12 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                 minInJob = Math.min(minInJob, duration);
             }
             minDurationPerJob.put(currJobId, minInJob);
-            out.collect(new Tuple2<>(currJobId, minInJob));
+            out.collect(new Tuple2<>(task, tuple3.f1));
         }
     }
 
     private static final class CalculateTaskDuration
-            extends RichFlatMapFunction<TaskEvent, Tuple3<Long, Integer, Long>> {
+            extends RichFlatMapFunction<Tuple2<TaskEvent, Long>, Tuple3<TaskEvent, Long, Long>> {
 
         // a map of "task => event"
         // keep all values in state
@@ -189,8 +238,9 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         }
 
         @Override
-        public void flatMap(TaskEvent taskEvent, Collector<Tuple3<Long, Integer, Long>> out)
+        public void flatMap(Tuple2<TaskEvent, Long> tuple2, Collector<Tuple3<TaskEvent, Long, Long>> out)
                 throws Exception {
+            TaskEvent taskEvent = tuple2.f0;
             Tuple2<Long, Integer> taskKey = new Tuple2<>(taskEvent.jobId, taskEvent.taskIndex);
             Log.info("jobID: " + taskEvent.jobId + " taskIndex: " + taskEvent.taskIndex);
             Integer count = countMessages.value();
@@ -212,11 +262,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                         }
                     } else {
                         // stored event is a FINISH => output the duration
-                        out.collect(
-                                new Tuple3<>(
-                                        taskEvent.jobId,
-                                        taskEvent.taskIndex,
-                                        stored.timestamp - taskEvent.timestamp));
+                        out.collect(new Tuple3<>(tuple2.f0, tuple2.f1,
+                                stored.timestamp - taskEvent.timestamp));
                         // clean-up state
                         events.remove(taskKey);
                     }
@@ -228,12 +275,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                 // this is a FINISH event: compute duration and emit downstream
                 if (events.contains(taskKey)) {
                     long submitTime = events.get(taskKey).timestamp;
-                    out.collect(
-                            new Tuple3<>(
-                                    taskEvent.jobId,
-                                    taskEvent.taskIndex,
-                                    taskEvent.timestamp - submitTime));
-                    // clean-up state
+                    out.collect(new Tuple3<>(tuple2.f0, tuple2.f1,
+                            taskEvent.timestamp - submitTime));
                     events.remove(taskKey);
                 } else {
                     // this is an unmatched FINISH event => store
