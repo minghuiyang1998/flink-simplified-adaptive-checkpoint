@@ -19,7 +19,6 @@ import org.apache.flink.connector.kafka.source.KafkaSourceOptions;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
 import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
-import org.apache.flink.runtime.taskexecutor.TaskExecutor;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
@@ -118,7 +117,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                     }
                                 })
                         .flatMap(new TaskWithMinDurationPerJob())
-                        .map(new calcLatency(logger));
+                        .map(new CalcLatency(logger));
         // disableChaining();
 
         maxDurationsPerJob.transform("Latency Sink", objectTypeInfo, new LatencySink<>(logger));
@@ -126,13 +125,13 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         env.execute();
     }
 
-    private static final class calcLatency implements MapFunction<Tuple2<TaskEvent, Long>, Tuple2<TaskEvent, Long>> {
+    private static final class CalcLatency implements MapFunction<Tuple2<TaskEvent, Long>, Tuple2<TaskEvent, Long>> {
         private final Logger logger;
         Long latestLatency;
         private final Timer timer;
         Long interval = 5000L;
 
-        public calcLatency(Logger logger) {
+        public CalcLatency(Logger logger) {
             this.logger = logger;
             timer = new Timer();
         }
@@ -151,7 +150,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                             "current_latency", latestLatency);
                 }
             }
-            
+
             timer.scheduleAtFixedRate(new InnerTTask(), interval, interval);
             return tuple2;
         }
