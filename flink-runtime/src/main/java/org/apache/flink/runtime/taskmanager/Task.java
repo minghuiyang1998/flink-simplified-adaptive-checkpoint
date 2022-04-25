@@ -28,6 +28,7 @@ import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.core.fs.FileSystemSafetyNet;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.core.security.FlinkSecurityManager;
+import org.apache.flink.metrics.Meter;
 import org.apache.flink.runtime.accumulators.AccumulatorRegistry;
 import org.apache.flink.runtime.blob.PermanentBlobKey;
 import org.apache.flink.runtime.broadcast.BroadcastVariableManager;
@@ -1316,7 +1317,26 @@ public class Task
     // ------------------------------------------------------------------------
     //  Notifications on the invokable
     // ------------------------------------------------------------------------
+    private class InnerTimerTask extends TimerTask {
+        private long interval;
 
+        public InnerTimerTask(long internal) {
+            this.interval = internal;
+        }
+
+        @Override
+        public void run() {
+            LOG.info(interval + "ms passed, submit metrics!");
+            TaskIOMetricGroup taskIOMetricGroup =
+                    metrics.getIOMetricGroup(); // include numRecordIn + busy
+            Meter numRecordsInRate = taskIOMetricGroup.getNumRecordsInRate();
+            double throughput = numRecordsInRate.getRate();
+            double busyTimeMsPerSecond = taskIOMetricGroup.getBusyTimePerSecond();
+            double idealProcessingRate = throughput * 1000 / busyTimeMsPerSecond;
+            taskManagerActions.submitTaskExecutorRunningStatus(
+                    new TaskManagerRunningState(executionId, -1, throughput, idealProcessingRate));
+        }
+    }
     /**
      * Schedule metrics submission to checkpoint adapter in jobmaster
      *
@@ -1329,20 +1349,8 @@ public class Task
         } else {
             isSubmitAfterCheckpoint = false;
             // set timer
-            timer.scheduleAtFixedRate(
-                    new TimerTask() {
-                        @Override
-                        public void run() {
-                            LOG.info(interval + "ms passed, submit metrics!");
-                            TaskIOMetricGroup taskIOMetricGroup =
-                                    metrics.getIOMetricGroup(); // include numRecordIn + busy
-                            taskManagerActions.submitTaskExecutorRunningStatus(
-                                    new TaskManagerRunningState(
-                                            executionId, -1, taskIOMetricGroup));
-                        }
-                    },
-                    interval,
-                    interval);
+            TimerTask task = new InnerTimerTask(interval);
+            timer.scheduleAtFixedRate(task, interval, interval);
             // TODO: cancel timer ?
         }
     }
@@ -1445,8 +1453,13 @@ public class Task
         if (isAdapterEnable && isSubmitAfterCheckpoint) {
             TaskIOMetricGroup taskIOMetricGroup =
                     metrics.getIOMetricGroup(); // include numRecordIn + busy
+            Meter numRecordsInRate = taskIOMetricGroup.getNumRecordsInRate();
+            double throughput = numRecordsInRate.getRate();
+            double busyTimeMsPerSecond = taskIOMetricGroup.getBusyTimePerSecond();
+            double idealProcessingRate = throughput * 1000 / busyTimeMsPerSecond;
             taskManagerActions.submitTaskExecutorRunningStatus(
-                    new TaskManagerRunningState(executionId, checkpointID, taskIOMetricGroup));
+                    new TaskManagerRunningState(
+                            executionId, checkpointID, throughput, idealProcessingRate));
         }
 
         if (executionState == ExecutionState.RUNNING) {

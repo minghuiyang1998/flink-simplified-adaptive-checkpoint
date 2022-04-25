@@ -18,9 +18,7 @@
 
 package org.apache.flink.runtime.taskmanager;
 
-import org.apache.flink.metrics.Meter;
 import org.apache.flink.runtime.executiongraph.ExecutionAttemptID;
-import org.apache.flink.runtime.metrics.groups.TaskIOMetricGroup;
 
 import java.io.Serializable;
 
@@ -34,12 +32,7 @@ import java.io.Serializable;
  */
 public class TaskManagerRunningState implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-
     private final ExecutionAttemptID executionId;
-
-    /** Serialized user-defined accumulators */
-    private final TaskIOMetricGroup taskIOMetricGroup;
 
     private final double numRecordsInRate;
 
@@ -52,32 +45,25 @@ public class TaskManagerRunningState implements Serializable {
      * never throw an exception.
      *
      * @param executionId the ID of the task execution whose state is to be reported
-     * @param taskIOMetricGroup The flink and user-defined accumulators which may be null.
      */
     public TaskManagerRunningState(
             ExecutionAttemptID executionId,
             long checkpointID,
-            TaskIOMetricGroup taskIOMetricGroup) {
+            double numRecordsInRate,
+            double idealProcessingRate) {
 
-        if (executionId == null || taskIOMetricGroup == null) {
+        if (executionId == null) {
             throw new NullPointerException();
         }
 
         this.executionId = executionId;
-        this.taskIOMetricGroup = taskIOMetricGroup;
-        Meter numRecordsInRate = taskIOMetricGroup.getNumRecordsInRate();
-        this.numRecordsInRate = numRecordsInRate.getRate();
-        double busyTimeMsPerSecond = taskIOMetricGroup.getBusyTimePerSecond();
-        this.idealProcessingRate = this.numRecordsInRate * 1000 / busyTimeMsPerSecond;
+        this.numRecordsInRate = numRecordsInRate;
+        this.idealProcessingRate = idealProcessingRate;
         this.checkpointID = checkpointID;
     }
 
     public ExecutionAttemptID getExecutionId() {
         return executionId;
-    }
-
-    public TaskIOMetricGroup getTaskIOMetricGroup() {
-        return taskIOMetricGroup;
     }
 
     public double getNumRecordsInRate() {
@@ -90,5 +76,25 @@ public class TaskManagerRunningState implements Serializable {
 
     public long getCheckpointID() {
         return checkpointID;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TaskExecutionState) {
+            TaskManagerRunningState other = (TaskManagerRunningState) obj;
+            return other.executionId.equals(this.executionId);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return executionId.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("TaskExecutionState executionId=%s", executionId);
     }
 }

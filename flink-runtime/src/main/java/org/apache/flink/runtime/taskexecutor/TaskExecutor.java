@@ -1850,7 +1850,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
                 config -> {
                     boolean isAdatperEnable = config.f0;
                     long interval = config.f1;
-                    log.debug(
+                    log.info(
                             "set checkpoint adapter submitting parameters {} for {}.",
                             executionAttemptID,
                             interval);

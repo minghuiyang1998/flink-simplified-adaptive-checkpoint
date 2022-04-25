@@ -111,4 +111,19 @@ public class JobCheckpointAdapterConfiguration implements Serializable {
     public JobCheckpointAdapterConfiguration() {
         this.recoveryTime = DEFAULT_RECOVERY;
     }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "SnapshotAdapterSettings: "
+                        + recoveryTime
+                        + ","
+                        + metricsInterval
+                        + ","
+                        + allowRange
+                        + ","
+                        + changeInterval
+                        + ","
+                        + isDebounceMode);
+    }
 }
