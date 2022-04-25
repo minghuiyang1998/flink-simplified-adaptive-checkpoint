@@ -91,12 +91,12 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
         // get SUBMIT and FINISH events in one place "jobId", "taskIndex", out put task duration
         DataStream<Tuple3<TaskEvent, Long, Long>> taskDurations =
-                events.map(new addProcessTime())
+                events.map(new AddProcessTime())
                         .keyBy(
                                 new KeySelector<Tuple2<TaskEvent, Long>, Tuple2<Integer, Long>>() {
                                     @Override
-                                    public Tuple2<Integer, Long> getKey(Tuple2<TaskEvent, Long> tuple)
-                                            throws Exception {
+                                    public Tuple2<Integer, Long> getKey(
+                                            Tuple2<TaskEvent, Long> tuple) throws Exception {
                                         TaskEvent taskEvent = tuple.f0;
                                         return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
                                     }
@@ -108,10 +108,11 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                 taskDurations
                         // key by priority
                         .keyBy(
-                                new KeySelector<Tuple3<TaskEvent, Long, Long>, Tuple2<Integer, Long>>() {
+                                new KeySelector<
+                                        Tuple3<TaskEvent, Long, Long>, Tuple2<Integer, Long>>() {
                                     @Override
-                                    public Tuple2<Integer, Long> getKey(Tuple3<TaskEvent, Long, Long> tuple3)
-                                            throws Exception {
+                                    public Tuple2<Integer, Long> getKey(
+                                            Tuple3<TaskEvent, Long, Long> tuple3) throws Exception {
                                         TaskEvent taskEvent = tuple3.f0;
                                         return Tuple2.of(taskEvent.taskIndex, taskEvent.jobId);
                                     }
@@ -125,7 +126,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         env.execute();
     }
 
-    private static final class CalcLatency implements MapFunction<Tuple2<TaskEvent, Long>, Tuple2<TaskEvent, Long>> {
+    private static final class CalcLatency
+            implements MapFunction<Tuple2<TaskEvent, Long>, Tuple2<TaskEvent, Long>> {
         private final Logger logger;
         Long latestLatency;
         private final Timer timer;
@@ -145,9 +147,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
             class InnerTTask extends TimerTask {
                 @Override
                 public void run() {
-                    logger.info(
-                            "%{}%{}",
-                            "current_latency", latestLatency);
+                    logger.info("%{}%{}", "current_latency", latestLatency);
                 }
             }
 
@@ -156,7 +156,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         }
     }
 
-    private static final class addProcessTime implements MapFunction<TaskEvent, Tuple2<TaskEvent, Long>> {
+    private static final class AddProcessTime
+            implements MapFunction<TaskEvent, Tuple2<TaskEvent, Long>> {
 
         @Override
         public Tuple2<TaskEvent, Long> map(TaskEvent value) throws Exception {
@@ -183,7 +184,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         }
 
         @Override
-        public void flatMap(Tuple3<TaskEvent, Long, Long> tuple3, Collector<Tuple2<TaskEvent, Long>> out)
+        public void flatMap(
+                Tuple3<TaskEvent, Long, Long> tuple3, Collector<Tuple2<TaskEvent, Long>> out)
                 throws Exception {
             // <job, maxTask>
             Integer count = countCompletedTasks.value();
@@ -237,7 +239,8 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
         }
 
         @Override
-        public void flatMap(Tuple2<TaskEvent, Long> tuple2, Collector<Tuple3<TaskEvent, Long, Long>> out)
+        public void flatMap(
+                Tuple2<TaskEvent, Long> tuple2, Collector<Tuple3<TaskEvent, Long, Long>> out)
                 throws Exception {
             TaskEvent taskEvent = tuple2.f0;
             Tuple2<Long, Integer> taskKey = new Tuple2<>(taskEvent.jobId, taskEvent.taskIndex);
@@ -261,7 +264,9 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                         }
                     } else {
                         // stored event is a FINISH => output the duration
-                        out.collect(new Tuple3<>(tuple2.f0, tuple2.f1,
+                        out.collect(new Tuple3<>(
+                                tuple2.f0,
+                                tuple2.f1,
                                 stored.timestamp - taskEvent.timestamp));
                         // clean-up state
                         events.remove(taskKey);
@@ -274,7 +279,9 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                 // this is a FINISH event: compute duration and emit downstream
                 if (events.contains(taskKey)) {
                     long submitTime = events.get(taskKey).timestamp;
-                    out.collect(new Tuple3<>(tuple2.f0, tuple2.f1,
+                    out.collect(new Tuple3<>(
+                            tuple2.f0,
+                            tuple2.f1,
                             taskEvent.timestamp - submitTime));
                     events.remove(taskKey);
                 } else {
