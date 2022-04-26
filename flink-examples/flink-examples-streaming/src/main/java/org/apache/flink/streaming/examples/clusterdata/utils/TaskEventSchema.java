@@ -20,14 +20,24 @@ public class TaskEventSchema
         return element.toString().getBytes();
     }
 
+    private static long count = 0;
+
     @Override
     public TaskEvent deserialize(byte[] message) {
         // TODO: we don't write them to Kafka in the same order we read them from the gzip file!
-
-        try {
-            Thread.sleep(2);
-        } catch (Exception e) {
-            e.printStackTrace();
+        count += 1;
+        if (count > 50000) {
+            try {
+                Thread.sleep(4);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                Thread.sleep(2);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         String line = new String(message);
