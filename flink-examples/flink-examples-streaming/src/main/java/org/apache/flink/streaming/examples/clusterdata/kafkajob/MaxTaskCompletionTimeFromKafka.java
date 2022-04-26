@@ -69,7 +69,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                         .setStartingOffsets(OffsetsInitializer.earliest())
                         .build();
         DataStream<TaskEvent> events =
-                env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source")
+                env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source");
 
         // get SUBMIT and FINISH events in one place "jobId", "taskIndex", out put task duration
         DataStream<Tuple3<TaskEvent, Long, Long>> taskDurations =
