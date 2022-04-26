@@ -35,22 +35,23 @@ import static org.apache.flink.streaming.api.CheckpointingMode.EXACTLY_ONCE;
 public class MaxTaskCompletionTimeFromKafka extends AppBase {
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
     private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
-    private static final String TASKS_GROUP = "task_group_1";
+    private static final String TASKS_GROUP = "task_group_2";
     public static final String TASKS_TOPIC = "wiki-edits";
     public static final String CHECKPOINT_DIR = "file:///home/CS551Team2/Checkpoint";
 
     public static void main(String[] args) throws Exception {
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
 
         // set up checkpointing
-        env.enableCheckpointing(20000L, EXACTLY_ONCE);
+        env.enableCheckpointing(10000L, EXACTLY_ONCE);
         env.setStateBackend(new HashMapStateBackend());
         env.getCheckpointConfig().setCheckpointStorage(CHECKPOINT_DIR);
 
         // enable Adapter
         env.enableCheckpointAdapter(30000L);
-        env.setCheckpointAdapterMetricInterval(10000L);
+        env.setCheckpointAdapterMetricInterval(5000L);
         env.setCheckpointAdapterAllowRange(0.3);
 
         KafkaSource<TaskEvent> source =
