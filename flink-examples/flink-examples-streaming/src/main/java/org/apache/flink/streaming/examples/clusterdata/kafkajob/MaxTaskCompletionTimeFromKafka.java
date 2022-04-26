@@ -100,7 +100,6 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                                     }
                                 })
                         .flatMap(new TaskWithMinDurationPerJob())
-                        .disableChaining()
                         .map(new CalcLatency());
         // disableChaining();
 
