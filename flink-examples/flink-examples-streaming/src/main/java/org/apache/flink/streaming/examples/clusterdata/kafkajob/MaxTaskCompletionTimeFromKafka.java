@@ -251,7 +251,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
                     // first SUBMIT we see for this task
                     events.put(taskKey, taskEvent);
                 }
-            } else if (taskEvent.eventType.equals(EventType.FINISH)) {
+            } else {
                 // this is a FINISH event: compute duration and emit downstream
                 if (events.contains(taskKey)) {
                     long submitTime = events.get(taskKey).timestamp;
