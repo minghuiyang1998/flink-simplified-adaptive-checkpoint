@@ -26,7 +26,7 @@ public class TaskEventSchema
     public TaskEvent deserialize(byte[] message) {
         // TODO: we don't write them to Kafka in the same order we read them from the gzip file!
         count += 1;
-        if (count > 50000) {
+        if (count > 30000) {
             try {
                 Thread.sleep(4);
             } catch (Exception e) {
