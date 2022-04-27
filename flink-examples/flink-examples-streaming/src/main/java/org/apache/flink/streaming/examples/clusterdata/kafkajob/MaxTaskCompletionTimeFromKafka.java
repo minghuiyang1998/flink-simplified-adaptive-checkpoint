@@ -50,7 +50,7 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
 
         // enable Adapter
         env.enableCheckpointAdapter(30000L);
-        env.setCheckpointAdapterMetricInterval(5000L);
+        env.setCheckpointAdapterMetricInterval(10000L);
         env.setCheckpointAdapterAllowRange(0.3);
 
         KafkaSource<TaskEvent> source =
