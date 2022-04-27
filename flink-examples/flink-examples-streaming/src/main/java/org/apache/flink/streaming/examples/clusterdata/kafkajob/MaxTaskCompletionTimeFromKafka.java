@@ -20,7 +20,6 @@ import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDe
 import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.examples.clusterdata.datatypes.EventType;
 import org.apache.flink.streaming.examples.clusterdata.datatypes.TaskEvent;
 import org.apache.flink.streaming.examples.clusterdata.utils.AppBase;
 import org.apache.flink.streaming.examples.clusterdata.utils.TaskEventSchema;
@@ -229,40 +228,13 @@ public class MaxTaskCompletionTimeFromKafka extends AppBase {
             }
 
             // what's the event type?
-            if (taskEvent.eventType.equals(EventType.SUBMIT)) {
-                // check if there is already a SUBMIT for this task and if yes, update it
-                if (events.contains(taskKey)) {
-                    TaskEvent stored = events.get(taskKey);
-                    if (stored.eventType.equals(EventType.SUBMIT)) {
-                        // keep latest SUBMIT
-                        if (stored.timestamp < taskEvent.timestamp) {
-                            events.put(taskKey, taskEvent);
-                        }
-                    } else {
-                        // stored event is a FINISH => output the duration
-                        out.collect(
-                                new Tuple3<>(
-                                        tuple2.f0,
-                                        tuple2.f1,
-                                        stored.timestamp - taskEvent.timestamp));
-                        // clean-up state
-                        events.remove(taskKey);
-                    }
-                } else {
-                    // first SUBMIT we see for this task
-                    events.put(taskKey, taskEvent);
-                }
+            if (events.contains(taskKey)) {
+                long stored = events.get(taskKey).timestamp;
+                out.collect(new Tuple3<>(tuple2.f0, tuple2.f1, taskEvent.timestamp - stored));
+                events.remove(taskKey);
             } else {
-                // this is a FINISH event: compute duration and emit downstream
-                if (events.contains(taskKey)) {
-                    long submitTime = events.get(taskKey).timestamp;
-                    out.collect(
-                            new Tuple3<>(tuple2.f0, tuple2.f1, taskEvent.timestamp - submitTime));
-                    events.remove(taskKey);
-                } else {
-                    // this is an unmatched FINISH event => store
-                    events.put(taskKey, taskEvent);
-                }
+                // this is an unmatched FINISH event => store
+                events.put(taskKey, taskEvent);
             }
         }
     }
