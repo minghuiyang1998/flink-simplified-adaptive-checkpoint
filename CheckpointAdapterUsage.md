@@ -1,4 +1,5 @@
 # Usage of Checkpoint Adapter
+## API Usage
 6 APIs are added to `StreamExecutionEnvironment` to set up an adaptive checkpoint.
 ```java
 // if you enable a checkpoint adapter without recovery time,
@@ -16,7 +17,7 @@ you set up **_these 2 parts and periodic checkpoint_** properly,
 otherwise the adapter will not work properly: 
 1. get metrics from each task
 2. calculate and update checkpoint interval referring to metrics
-## Set up periodic checkpoint and set up adapter
+### Set up periodic checkpoint and set up adapter
 ```java
 env.enableCheckpointing(3000L);
 env.enableCheckpointAdapter(10000L); 
@@ -25,7 +26,7 @@ env.enableCheckpointAdapter(10000L);
  interval will not be updated
 */
 ```
-## Set up metrics submission
+### Set up metrics submission
 There are 2 ways for each task to submit metrics:
 1. submit metrics after each task complete a checkpoint(default)
 2. submit metrics periodically
@@ -43,7 +44,7 @@ public static void main(String[] args){
 }
 ```
 
-## Set up reset checkpoint strategy
+### Set up reset checkpoint strategy
 There are 4 ways for each task to reset checkpoint interval.
 These 4 ways are decided by 3 params: 
 1. `allowRange` (default: -1), 
@@ -103,3 +104,17 @@ public static void main(String[] args){
          * */
 }
 ```
+
+## Docs Description
+1. Main Flink application for experiment:
+- "flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/clusterdata/kafkajob/MaxTaskCompletionTimeFromKafka.java"
+2. Flink application for injecting data to Kafka: 
+- "flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/clusterdata/kafkajob/FilterTaskEventsToKafka.java"
+3. Important files related to Checkpoint Adapter Implementation
+- "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/CheckpointAdapter.java"
+- "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/JobMaster.java"
+- "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/JobMasterGateway.java"
+- "flink-runtime/src/main/java/org/apache/flink/runtime/taskmanager/TaskExecutor.java"
+- "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/TaskExecutorGateway.java"
+- "flink-runtime/src/main/java/org/apache/flink/runtime/taskmanager/Task.java"
+4. Exp-1: master branch, Exp-2: exp-2 branch: exp-2 will include the speed adjustment part
