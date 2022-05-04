@@ -34,7 +34,7 @@ import static org.apache.flink.streaming.api.CheckpointingMode.EXACTLY_ONCE;
 /** Other ideas: - average task runtime per priority - a histogram of task scheduling latency. */
 public class MaxTaskCompletionTimeFromKafka extends AppBase {
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
-    private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
+    private static final String REMOTE_KAFKA_BROKER = "kafka:9092";
     private static final String TASKS_GROUP = "task_group_1";
     public static final String TASKS_TOPIC = "wiki-edits";
     public static final String CHECKPOINT_DIR = "file:///home/CS551Team2/Checkpoint";

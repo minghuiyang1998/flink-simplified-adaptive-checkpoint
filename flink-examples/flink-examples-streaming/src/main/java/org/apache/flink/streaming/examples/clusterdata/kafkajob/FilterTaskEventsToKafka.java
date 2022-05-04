@@ -21,7 +21,7 @@ import java.util.Properties;
 public class FilterTaskEventsToKafka extends AppBase {
 
     private static final String LOCAL_KAFKA_BROKER = "localhost:9092";
-    private static final String REMOTE_KAFKA_BROKER = "20.127.226.8:9092";
+    private static final String REMOTE_KAFKA_BROKER = "kafka:9092";
     public static final String FILTERED_TASKS_TOPIC = "wiki-edits";
 
     public static void main(String[] args) throws Exception {
