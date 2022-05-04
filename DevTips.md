@@ -16,3 +16,7 @@ indicating that the "rpcService" cannot be established.)
 
 6. The best way to learn how to use the API is to look at Example instead of searching for documentation on the website
 
+7. Build the whole Flink to ensure that you use the imported package of Custom Flink. Build example separately will use flink-1.14.0.
+
+8. For "Couldn't find/download xxxplugin" error, just rebuild it
+
