@@ -107,14 +107,15 @@ public static void main(String[] args){
 
 ## Docs Description
 1. Main Flink application for experiment:
-- "flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/clusterdata/kafkajob/MaxTaskCompletionTimeFromKafka.java"
+   - "flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/clusterdata/kafkajob/MaxTaskCompletionTimeFromKafka.java"
 2. Flink application for injecting data to Kafka: 
-- "flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/clusterdata/kafkajob/FilterTaskEventsToKafka.java"
-3. Important files related to Checkpoint Adapter Implementation
-- "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/CheckpointAdapter.java"
-- "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/JobMaster.java"
-- "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/JobMasterGateway.java"
-- "flink-runtime/src/main/java/org/apache/flink/runtime/taskmanager/TaskExecutor.java"
-- "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/TaskExecutorGateway.java"
-- "flink-runtime/src/main/java/org/apache/flink/runtime/taskmanager/Task.java"
-4. Exp-1: master branch, Exp-2: exp-2 branch: exp-2 will include the speed adjustment part
+   - "flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/clusterdata/kafkajob/FilterTaskEventsToKafka.java"
+3. Important files related to Checkpoint Adapter Implementation.
+![impl](http://blog.minghuiyang1998.com/20220505141506.png)
+   - "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/CheckpointAdapter.java"
+   - "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/JobMaster.java"
+   - "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/JobMasterGateway.java"
+   - "flink-runtime/src/main/java/org/apache/flink/runtime/taskmanager/TaskExecutor.java"
+   - "flink-runtime/src/main/java/org/apache/flink/runtime/jobmaster/TaskExecutorGateway.java"
+   - "flink-runtime/src/main/java/org/apache/flink/runtime/taskmanager/Task.java"
+4. Exp-1: master branch, Exp-2: exp-2 branch: exp-2 includes the speed adjustment part in org.apache.flink.streaming.examples.clusterdata.sources.TaskEventSource
