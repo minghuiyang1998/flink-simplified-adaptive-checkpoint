@@ -1,7 +1,4 @@
-Datasource -> filter -> kafkasink -> kafka -> consumer using flink
-
-Change the input rate in org.apache.flink.streaming.examples.clusterdata.sources.TaskEventSource
-
+version under maintenance: https://github.com/CASP-Systems-BU/Adaptive-Checkpointing
 
 # Apache Flink
 
